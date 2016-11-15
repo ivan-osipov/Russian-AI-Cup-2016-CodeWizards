@@ -1,10 +1,13 @@
 import model.*;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static model.SkillType.*;
+
 
 public final class MyStrategy implements Strategy {
     private static final double WAYPOINT_RADIUS = 100.0D;
@@ -13,6 +16,7 @@ public final class MyStrategy implements Strategy {
 
     private static final int TARGET_POSITION_IN_RATING = 0;
 
+    private static DebugVisualizer VISUALIZER;
     /**
      * Ключевые точки для каждой линии, позволяющие упростить управление перемещением волшебника.
      * <p>
@@ -58,6 +62,7 @@ public final class MyStrategy implements Strategy {
 
     private int lastTickCheck = 0;
 
+    private int weightOfAggressiveness;
 
     private boolean firstInit = true;
 
@@ -71,13 +76,6 @@ public final class MyStrategy implements Strategy {
     private Game game;
     private Move move;
 
-    private DecisionTree decisionTree;
-
-    private int weightOfAggressiveness;
-
-    private Faction ownFaction;
-    private long ownId;
-
     private enum MovingState { STABLE_PATH, TO_BONUS }
 
     private Map<LaneType, Point2D> bonusesByLane = new EnumMap<>(LaneType.class);
@@ -87,15 +85,6 @@ public final class MyStrategy implements Strategy {
     private int stayingTime = 0;
 
 
-    /**
-     * Основной метод стратегии, осуществляющий управление волшебником.
-     * Вызывается каждый тик для каждого волшебника.
-     *
-     * @param self  Волшебник, которым данный метод будет осуществлять управление.
-     * @param world Текущее состояние мира.
-     * @param game  Различные игровые константы.
-     * @param move  Результатом работы метода является изменение полей данного объекта.
-     */
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
         initializeTick(self, world, game, move);
@@ -116,7 +105,7 @@ public final class MyStrategy implements Strategy {
         }
 
         if(movingState == MovingState.STABLE_PATH) {
-//todo ожидание миньёнов у башни
+            //todo ожидание миньёнов у башни
             //todo не пытаться отступать внутри квадрата 150х150
             List<LivingUnit> sortedByWeakFactorNearstEnemies = getSortedByWeakFactorNearstEnemies();
             LivingUnit nearestTarget = sortedByWeakFactorNearstEnemies.isEmpty() ? null : sortedByWeakFactorNearstEnemies.get(0);
@@ -192,10 +181,10 @@ public final class MyStrategy implements Strategy {
             }
         } else if(movingState == MovingState.TO_BONUS) {
             Point2D bonus = bonusesByLane.get(myLane);
-            if(self.getDistanceTo(bonus.x, bonus.y) <= game.getWizardVisionRange()) {
+            if(self.getDistanceTo(bonus.getX(), bonus.getY()) <= game.getWizardVisionRange()) {
                 boolean bonusExists = false;
                 for (Bonus currentBonus : world.getBonuses()) {
-                    if(currentBonus.getX() == bonus.x && currentBonus.getY() == bonus.y) {
+                    if(currentBonus.getX() == bonus.getX() && currentBonus.getY() == bonus.getY()) {
                         bonusExists = true;
                         break;
                     }
@@ -234,6 +223,31 @@ public final class MyStrategy implements Strategy {
             stayingTime = 0;
         }
         previousPosition = currentPosition;
+    }
+
+    private void printDebugInformation() {
+        if(!VISUALIZER.isInitialized()) return;
+        for (Wizard wizard : world.getWizards()) {
+            if(wizard.isMaster()) {
+                VISUALIZER.text(wizard.getX() + wizard.getRadius(),
+                        wizard.getY() + wizard.getRadius(),
+                        wizard.getX() + " - " + wizard.getY(),
+                        Color.BLACK);
+                break;
+//                if (Zones.HOME.contains(new Point2D(wizard.getX(), wizard.getY()))) {
+//                    VISUALIZER.fillCircle(wizard.getX() - wizard.getRadius(), wizard.getY() + wizard.getRadius(), 2, Color.GREEN);
+//                    VISUALIZER.drawZone(Zones.HOME, Color.GREEN);
+//                } else if (Zones.TOP_FOREFRONT_1.contains(new Point2D(wizard.getX(), wizard.getY()))) {
+//                    VISUALIZER.fillCircle(wizard.getX() - wizard.getRadius(), wizard.getY() + wizard.getRadius(), 2, new Color(255, 255, 0));
+//                    VISUALIZER.drawZone(Zones.TOP_FOREFRONT_1, new Color(255, 255, 0));
+//                } else if(Zones.TOP_FOREFRONT_2.contains(new Point2D(wizard.getX(), wizard.getY()))) {
+//                    VISUALIZER.fillCircle(wizard.getX() - wizard.getRadius(), wizard.getY() + wizard.getRadius(), 2, Color.ORANGE);
+//                    VISUALIZER.drawZone(Zones.TOP_FOREFRONT_2, Color.ORANGE);
+//                } else {
+//                    VISUALIZER.fillCircle(wizard.getX() - wizard.getRadius(), wizard.getY() + wizard.getRadius(), 2, Color.RED);
+//                }
+            }
+        }
     }
 
     private boolean manyNear(Minion[] minions) {
@@ -287,49 +301,54 @@ public final class MyStrategy implements Strategy {
 
 
         } else {
-            Message[] messages = self.getMessages();
-            int myMessageIndex = ((Long) self.getOwnerPlayerId()).intValue();
-            if(myMessageIndex >= messages.length) {
-                System.err.println("Incorrect message index");
-                return;
-            }
-            Message messageForMe = messages[myMessageIndex];
-            if(messageForMe.getLane() != null) {
-                myLane = messageForMe.getLane();
-                System.out.println("Accepted lane from message");
-            }
-            switch (messageForMe.getSkillToLearn()) {
-                case ADVANCED_MAGIC_MISSILE:
-                    mySkillBranch = MISSILE_BRANCH;
-                    favoriteActionType = ActionType.MAGIC_MISSILE;
-                    damager = true;
-                    break;
-                case FROST_BOLT:
-                    mySkillBranch = FROST_BOLT_BRANCH;
-                    favoriteActionType = ActionType.FROST_BOLT;
-                    damager = true;
-                    break;
-                case FIREBALL:
-                    mySkillBranch = STAFF_AND_FIREBALL_BRANCH;
-                    favoriteActionType = ActionType.FIREBALL;
-                    damager = true;
-                    break;
-                case HASTE:
-                    mySkillBranch = HASTE_BRANCH;
-                    favoriteActionType = ActionType.HASTE;
-                    damager = false;
-                    break;
-                case SHIELD:
-                    mySkillBranch = SHIELD_BRANCH;
-                    favoriteActionType = ActionType.SHIELD;
-                    damager = false;
-                    break;
-                default:
-                    mySkillBranch = FROST_BOLT_BRANCH;
-                    favoriteActionType = ActionType.FROST_BOLT;
-                    damager = true;
-                    break;
-            }
+            myLane = LaneType.TOP;
+            mySkillBranch = FROST_BOLT_BRANCH;
+            favoriteActionType = ActionType.FROST_BOLT;
+            damager = true;
+
+//            Message[] messages = self.getMessages();
+//            int myMessageIndex = ((Long) self.getId()).intValue();
+//            if(myMessageIndex >= messages.length) {
+//                System.err.println("Incorrect message index");
+//                return;
+//            }
+//            Message messageForMe = messages[myMessageIndex];
+//            if(messageForMe.getLane() != null) {
+//                myLane = messageForMe.getLane();
+//                System.out.println("Accepted lane from message");
+//            }
+//            switch (messageForMe.getSkillToLearn()) {
+//                case ADVANCED_MAGIC_MISSILE:
+//                    mySkillBranch = MISSILE_BRANCH;
+//                    favoriteActionType = ActionType.MAGIC_MISSILE;
+//                    damager = true;
+//                    break;
+//                case FROST_BOLT:
+//                    mySkillBranch = FROST_BOLT_BRANCH;
+//                    favoriteActionType = ActionType.FROST_BOLT;
+//                    damager = true;
+//                    break;
+//                case FIREBALL:
+//                    mySkillBranch = STAFF_AND_FIREBALL_BRANCH;
+//                    favoriteActionType = ActionType.FIREBALL;
+//                    damager = true;
+//                    break;
+//                case HASTE:
+//                    mySkillBranch = HASTE_BRANCH;
+//                    favoriteActionType = ActionType.HASTE;
+//                    damager = false;
+//                    break;
+//                case SHIELD:
+//                    mySkillBranch = SHIELD_BRANCH;
+//                    favoriteActionType = ActionType.SHIELD;
+//                    damager = false;
+//                    break;
+//                default:
+//                    mySkillBranch = FROST_BOLT_BRANCH;
+//                    favoriteActionType = ActionType.FROST_BOLT;
+//                    damager = true;
+//                    break;
+//            }
         }
     }
 
@@ -473,13 +492,26 @@ public final class MyStrategy implements Strategy {
      * случайных чисел значением, полученным от симулятора игры.
      */
     private void initializeStrategy(Wizard self, Game game) {
+        if (VISUALIZER != null && VISUALIZER.isInitialized()) {
+            VISUALIZER.pre(() -> {
+                VISUALIZER.drawZones(Color.BLACK,
+                        Zones.HOME,
+                        Zones.TOP_FOREFRONT_1,
+                        Zones.TOP_FOREFRONT_2,
+                        Zones.TOP_PRE_ARENA_PLACE,
+                        Zones.TOP_ARENA_PLACE,
+                        Zones.TOP_MIDDLE_TRANSITION,
+                        Zones.MIDDLE_FOREFRONT_1,
+                        Zones.MIDDLE_FOREFRONT_2,
+                        Zones.MIDDLE_BOTTOM_TRANSITION,
+                        Zones.CENTER);
+                printDebugInformation();
+            });
+        }
         if(firstInit) {
             firstInit = false;
-            ownFaction = self.getFaction();
-            ownId = self.getOwnerPlayerId();
-            decisionTree = new DecisionTree();
-        }
-        if (random == null) {
+            VISUALIZER = new DebugVisualizer();
+
             random = new Random(game.getRandomSeed());
 
             double mapSize = game.getMapSize();
@@ -565,15 +597,7 @@ public final class MyStrategy implements Strategy {
             bonusesByLane.put(LaneType.MIDDLE, new Point2D(1200, 1200));
             bonusesByLane.put(LaneType.BOTTOM, new Point2D(2800, 2800));
 
-            // Наша стратегия исходит из предположения, что заданные нами ключевые точки упорядочены по убыванию
-            // дальности до последней ключевой точки. Сейчас проверка этого факта отключена, однако вы можете
-            // написать свою проверку, если решите изменить координаты ключевых точек.
 
-            /*Point2D lastWaypoint = waypoints[waypoints.length - 1];
-
-            Preconditions.checkState(ArrayUtils.isSorted(waypoints, (waypointA, waypointB) -> Double.compare(
-                    waypointB.getDistanceTo(lastWaypoint), waypointA.getDistanceTo(lastWaypoint)
-            )));*/
         }
 
         List<Player> playersSortedByScore = Arrays.asList(world.getPlayers());
@@ -779,62 +803,6 @@ public final class MyStrategy implements Strategy {
             }
             return weightsCompare;
         }).collect(Collectors.toList());
-    }
-
-    /**
-     * Вспомогательный класс для хранения позиций на карте.
-     */
-    private static final class Point2D {
-        private final double x;
-        private final double y;
-
-        private Point2D(double x, double y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public double getX() {
-            return x;
-        }
-
-        public double getY() {
-            return y;
-        }
-
-        public double getDistanceTo(double x, double y) {
-            return StrictMath.hypot(this.x - x, this.y - y);
-        }
-
-        public double getDistanceTo(Point2D point) {
-            return getDistanceTo(point.x, point.y);
-        }
-
-        public double getDistanceTo(Unit unit) {
-            return getDistanceTo(unit.getX(), unit.getY());
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Point2D point2D = (Point2D) o;
-
-            if (Double.compare(point2D.x, x) != 0) return false;
-            return Double.compare(point2D.y, y) == 0;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result;
-            long temp;
-            temp = Double.doubleToLongBits(x);
-            result = (int) (temp ^ (temp >>> 32));
-            temp = Double.doubleToLongBits(y);
-            result = 31 * result + (int) (temp ^ (temp >>> 32));
-            return result;
-        }
     }
 
     private static final class DecisionTree {

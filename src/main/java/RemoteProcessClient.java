@@ -25,7 +25,7 @@ public final class RemoteProcessClient implements Closeable {
 
     public RemoteProcessClient(String host, int port) throws IOException {
         try {
-            Thread.sleep(1500);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
