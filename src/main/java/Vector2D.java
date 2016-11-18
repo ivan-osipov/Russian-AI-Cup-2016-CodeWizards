@@ -9,6 +9,10 @@ public class Vector2D {
         this.end = end;
     }
 
+    public Vector2D getReverse() {
+        return new Vector2D(end, start);
+    }
+
     public double distanceBetween() {
         return start.getDistanceTo(end);
     }

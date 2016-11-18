@@ -23,6 +23,9 @@ public final class MyStrategy implements Strategy {
 
     private StatisticCollector statisticCollector;
 
+    private GameMapGraph graph = new GameMapGraph();
+    private GraphMapper graphMapper = new GraphMapper();
+
     private static final int TARGET_POSITION_IN_RATING = 0;
 
 //    private final Map<LaneType, Point2D[]> waypointsByLane = new EnumMap<>(LaneType.class);
@@ -94,7 +97,15 @@ public final class MyStrategy implements Strategy {
             favoriteActionType = ActionType.FROST_BOLT;
 
             random = new Random(game.getRandomSeed());
-
+            Points.CHECK_POINTS.forEach(point -> {
+                GameMapGraph.Node node = graphMapper.map(point);
+                graph.addNode(node);
+            });
+            Points.CHECK_POINT_EDGES.forEach(checkPointEdge -> {
+                GameMapGraph.Edge edge = graphMapper.map(checkPointEdge);
+                graph.addEdge(edge);
+                graph.addEdge(graphMapper.map(checkPointEdge.getReverse()));
+            });
 //            double mapSize = game.getMapSize();
 //            waypointsByLane.put(LaneType.MIDDLE, new Point2D[]{
 //                    new Point2D(100.0D, mapSize - 100.0D),
@@ -401,6 +412,14 @@ public final class MyStrategy implements Strategy {
 
     public List<Zone> getCapturedZones() {
         return capturedZones;
+    }
+
+    public GameMapGraph getGraph() {
+        return graph;
+    }
+
+    public GraphMapper getGraphMapper() {
+        return graphMapper;
     }
 
     private void printDebugInformation() {

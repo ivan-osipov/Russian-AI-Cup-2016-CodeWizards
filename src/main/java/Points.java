@@ -19,7 +19,8 @@ public class Points {
 
     public static Point2D UPPER_BONUS_POINT = new Point2D(1200, 1200);
 
-//    public static List<Point2D> CHECK_POINTS = new ArrayList<>();
+    public static List<Point2D> CHECK_POINTS = new ArrayList<>();
+
     public static List<Vector2D> CHECK_POINT_EDGES = new ArrayList<>();
 
     static {
@@ -35,6 +36,8 @@ public class Points {
         fillLowerBonusZonePoints();
 
         fillUpperBonusZonePoints();
+
+        fillCheckPoints();
 
         //connection zones
         //home-top
@@ -58,6 +61,17 @@ public class Points {
         //upper-bonus-top
         CHECK_POINT_EDGES.add(new Vector2D(UPPER_BONUS_ZONE_POINTS.get(2), TOP_START_POINTS.get(1)));
 
+    }
+
+    private static void fillCheckPoints() {
+        CHECK_POINTS.addAll(HOME_ZONE_POINTS);
+        CHECK_POINTS.addAll(TOP_START_POINTS);
+        CHECK_POINTS.addAll(MIDDLE_START_POINTS);
+        CHECK_POINTS.addAll(BOTTOM_START_POINTS);
+        CHECK_POINTS.addAll(LOWER_BONUS_ZONE_POINTS);
+        CHECK_POINTS.addAll(UPPER_BONUS_ZONE_POINTS);
+        CHECK_POINTS.add(LOWER_BONUS_POINT);
+        CHECK_POINTS.add(UPPER_BONUS_POINT);
     }
 
     private static void fillUpperBonusZonePoints() {

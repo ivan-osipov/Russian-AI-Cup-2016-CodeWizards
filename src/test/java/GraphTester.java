@@ -6,10 +6,10 @@ import java.util.List;
 public class GraphTester {
     private GameMapGraph graph = new GameMapGraph();
 
-    private GameMapGraph.Node one = new GameMapGraph.Node(1);
-    private GameMapGraph.Node two = new GameMapGraph.Node(2);
-    private GameMapGraph.Node three = new GameMapGraph.Node(3);
-    private GameMapGraph.Node four = new GameMapGraph.Node(4);
+    private GameMapGraph.Node one = new GameMapGraph.Node();
+    private GameMapGraph.Node two = new GameMapGraph.Node();
+    private GameMapGraph.Node three = new GameMapGraph.Node();
+    private GameMapGraph.Node four = new GameMapGraph.Node();
 
     @Before
     public void setUp() {

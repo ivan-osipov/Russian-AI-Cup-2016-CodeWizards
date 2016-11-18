@@ -172,24 +172,25 @@ public class GameMapGraph {
      */
     public static class Node {
 
-        private int zoneId;
+        private UUID id = UUID.randomUUID();
 
-        public Node(int zoneId) {
-            this.zoneId = zoneId;
+        public Node() {
         }
-
-        public int getZoneId() {
-            return zoneId;
-        }
-
-        public void setZoneId(int zoneId) {
-            this.zoneId = zoneId;
-        }
-
 
         @Override
-        public String toString() {
-            return String.valueOf(zoneId);
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Node node = (Node) o;
+
+            return id != null ? id.equals(node.id) : node.id == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return id != null ? id.hashCode() : 0;
         }
     }
 
@@ -197,6 +198,8 @@ public class GameMapGraph {
      Длина пути между узлами
      */
     public static class Edge {
+
+        private UUID id = UUID.randomUUID();
 
         private Node first;
 
@@ -222,6 +225,22 @@ public class GameMapGraph {
 
         public double getWeight() {
             return weight;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Edge edge = (Edge) o;
+
+            return id != null ? id.equals(edge.id) : edge.id == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return id != null ? id.hashCode() : 0;
         }
     }
 
