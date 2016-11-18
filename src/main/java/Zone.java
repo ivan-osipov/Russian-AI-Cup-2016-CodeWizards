@@ -4,9 +4,23 @@ import java.util.List;
 public class Zone {
 
     private Point2D[] corners;
+    private Point2D centroid;
 
     public Zone(Point2D... corners) {
         this.corners = corners;
+        this.centroid = calculateCentroid(corners);
+    }
+
+    private Point2D calculateCentroid(Point2D[] corners) {
+        double x = 0;
+        double y = 0;
+        for (Point2D corner : corners) {
+            x += corner.getX();
+            y += corner.getY();
+        }
+        x /= corners.length;
+        y /= corners.length;
+        return new Point2D(x, y);
     }
 
     public boolean contains(Point2D point) {
@@ -31,6 +45,10 @@ public class Zone {
         }
         lines.add(new Line2D(corners[corners.length - 1], corners[0]));
         return lines;
+    }
+
+    public Point2D getCentroid() {
+        return centroid;
     }
 
 }

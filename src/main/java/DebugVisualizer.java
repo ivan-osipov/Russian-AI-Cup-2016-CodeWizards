@@ -68,32 +68,41 @@ public class DebugVisualizer {
     }
 
     public void drawZone(Zone zone, Color color) {
-        post(() -> {
-            try {
+        try {
+            for (Line2D line : zone.getLines()) {
+                visualClientClass.getMethod("line", double.class, double.class, double.class, double.class, Color.class)
+                        .invoke(visualClient, line.getStart().getX(), line.getStart().getY(), line.getEnd().getX(), line.getEnd().getY(), color);
+            }
+            visualClientClass.getMethod("fillCircle", double.class, double.class, double.class, Color.class)
+                    .invoke(visualClient, zone.getCentroid().getX(), zone.getCentroid().getY(), 5 ,Color.BLUE);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void drawVector(Vector2D line, Color color) {
+        try {
+            visualClientClass.getMethod("line", double.class, double.class, double.class, double.class, Color.class)
+                    .invoke(visualClient, line.getStart().getX(), line.getStart().getY(), line.getEnd().getX(), line.getEnd().getY(), color);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void drawZones(Color color, Zone... zones) {
+        try {
+            for (Zone zone : zones) {
                 for (Line2D line : zone.getLines()) {
                     visualClientClass.getMethod("line", double.class, double.class, double.class, double.class, Color.class)
                             .invoke(visualClient, line.getStart().getX(), line.getStart().getY(), line.getEnd().getX(), line.getEnd().getY(), color);
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        });
-    }
-    public void drawZones(Color color, Zone... zones) {
-//        post(() -> {
-            try {
-                for (Zone zone : zones) {
-                    for (Line2D line : zone.getLines()) {
-                        visualClientClass.getMethod("line", double.class, double.class, double.class, double.class, Color.class)
-                                .invoke(visualClient, line.getStart().getX(), line.getStart().getY(), line.getEnd().getX(), line.getEnd().getY(), color);
-                    }
-                }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-//        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void post(Runnable runnable) {
@@ -112,7 +121,7 @@ public class DebugVisualizer {
         }
     }
 
-    private void beginPre() {
+    public void beginPre() {
         try {
             visualClientClass.getMethod("beginPre").invoke(visualClient);
         } catch (Exception e) {
@@ -120,7 +129,7 @@ public class DebugVisualizer {
         }
     }
 
-    private void beginPost() {
+    public void beginPost() {
         try {
             visualClientClass.getMethod("beginPost").invoke(visualClient);
         } catch (Exception e) {
@@ -128,7 +137,7 @@ public class DebugVisualizer {
         }
     }
 
-    private void endPre() {
+    public void endPre() {
         try {
             visualClientClass.getMethod("endPre").invoke(visualClient);
         } catch (Exception e) {
