@@ -9,6 +9,14 @@ public class GraphMapper {
     private Map<GameMapGraph.Node, Point2D> pointToNode = new HashMap<>();
     private Map<Vector2D, GameMapGraph.Edge> edgeToVector = new HashMap<>();
 
+    public GraphMapper copy() {
+        GraphMapper copy = new GraphMapper();
+        copy.nodeToPoint = new HashMap<>(nodeToPoint);
+        copy.pointToNode = new HashMap<>(pointToNode);
+        copy.edgeToVector = new HashMap<>(edgeToVector);
+        return copy;
+    }
+
     public GameMapGraph.Node map(Point2D point) {
         GameMapGraph.Node mappedNode = nodeToPoint.get(point);
         if(mappedNode != null) {

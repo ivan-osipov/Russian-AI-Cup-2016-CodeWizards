@@ -5,15 +5,16 @@ import model.World;
 
 import java.util.List;
 
-public class CaptureBehaviour extends Behaviour {
+public class WalkingBehaviour extends Behaviour {
 
-    public CaptureBehaviour(Wizard self, World world, Game game, Move move, MyStrategy strategy) {
+    public WalkingBehaviour(Wizard self, World world, Game game, Move move, MyStrategy strategy) {
         super(self, world, game, move, strategy);
     }
 
     @Override
     public void perform() {
-        if (safe()) {
+        System.out.println("Walking");
+        if (safe() && nextSafe()) {
             if(strategy.getCurrentZoneNumber() + 2 > strategy.getCapturedZones().size()) {
                 System.err.println("No decisions");
                 return;
@@ -30,9 +31,12 @@ public class CaptureBehaviour extends Behaviour {
                     nearToTargetGraphPoint = checkPoint;
                 }
             }
-            if(!nearToSelfGraphPoint.equals(nearToTargetGraphPoint)) {
-                GraphMapper graphMapper = strategy.getGraphMapper();
-                List<GameMapGraph.Node> bestWay = strategy.getGraph()
+            if(nearToSelfGraphPoint.getDistanceTo(nearToTargetGraphPoint) > POINT_RADIUS) {
+                GraphMapper graphMapper = strategy.getGraphMapper().copy();
+                GameMapGraph graph = strategy.getGraph().copy();
+                addEdgeBetweenAbsoluteAndGraphPoint(selfPoint, nearToSelfGraphPoint, graphMapper, graph);
+                addEdgeBetweenAbsoluteAndGraphPoint(targetPoint, nearToTargetGraphPoint, graphMapper, graph);
+                List<GameMapGraph.Node> bestWay = graph
                         .findBestWayDijkstra(
                                 graphMapper.map(nearToSelfGraphPoint),
                                 graphMapper.map(nearToTargetGraphPoint));
@@ -42,6 +46,19 @@ public class CaptureBehaviour extends Behaviour {
                 goTo(targetPoint);
             }
             return;
+        } else {
+            System.out.println("Here isn't safe");
+            strategy.setWizardState(WizardState.PUSHING);
+        }
+    }
+
+    private void addEdgeBetweenAbsoluteAndGraphPoint(Point2D absPoint, Point2D graphPoint, GraphMapper graphMapper, GameMapGraph graph) {
+        if(!graphPoint.equals(absPoint)) {
+            GameMapGraph.Node targetNode = graphMapper.map(absPoint);
+            graph.addNode(targetNode);
+            Vector2D targetToNearEdge = new Vector2D(absPoint, graphPoint);
+            GameMapGraph.Edge targetEdge = graphMapper.map(targetToNearEdge);
+            graph.addEdge(targetEdge);
         }
     }
 

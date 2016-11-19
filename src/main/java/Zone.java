@@ -11,6 +11,10 @@ public class Zone {
         this.centroid = calculateCentroid(corners);
     }
 
+    public Point2D[] getCorners() {
+        return corners;
+    }
+
     private Point2D calculateCentroid(Point2D[] corners) {
         double x = 0;
         double y = 0;

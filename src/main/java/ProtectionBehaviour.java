@@ -11,6 +11,7 @@ public class ProtectionBehaviour extends  Behaviour {
 
     @Override
     void perform() {
+        System.out.println("Protection");
 
     }
 }

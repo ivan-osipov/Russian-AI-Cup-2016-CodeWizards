@@ -3,7 +3,6 @@ import model.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static model.SkillType.*;
 
@@ -11,6 +10,7 @@ import static model.SkillType.*;
 public final class MyStrategy implements Strategy {
 
     private DebugVisualizer VISUALIZER;
+    private Random random;
     private Wizard self;
     private World world;
     private Game game;
@@ -19,7 +19,7 @@ public final class MyStrategy implements Strategy {
     private WizardState wizardState;
     private List<Zone> capturedZones;
     private int currentZoneNumber;
-    private Map<WizardState, Behaviour> behaviours;
+    private EnumMap<WizardState, Behaviour> behaviours;
 
     private StatisticCollector statisticCollector;
 
@@ -42,7 +42,6 @@ public final class MyStrategy implements Strategy {
     private static final int SHIELD_BRANCH = 4;
 
     private final SkillType[][] skillBranches = {
-            //todo как результат нет задержки на выполнение действий MISSILE
             {RANGE_BONUS_PASSIVE_1, RANGE_BONUS_AURA_1, RANGE_BONUS_PASSIVE_2, RANGE_BONUS_AURA_2, ADVANCED_MAGIC_MISSILE},
             {MAGICAL_DAMAGE_BONUS_PASSIVE_1, MAGICAL_DAMAGE_BONUS_AURA_1, MAGICAL_DAMAGE_BONUS_PASSIVE_2, MAGICAL_DAMAGE_BONUS_AURA_2, FROST_BOLT},
             {STAFF_DAMAGE_BONUS_PASSIVE_1, STAFF_DAMAGE_BONUS_AURA_1, STAFF_DAMAGE_BONUS_PASSIVE_2, STAFF_DAMAGE_BONUS_AURA_2, FIREBALL},
@@ -60,24 +59,13 @@ public final class MyStrategy implements Strategy {
 
     private Integer skillLevel = 0;
 
-    private MovingState movingState = MovingState.STABLE_PATH;
-
-    private boolean bonusIsChecked = false;
-
     private int lastTickCheck = 0;
 
     private int weightOfAggressiveness;
 
-    private Map<Zone, Double> protections = new HashMap<>();
-
-    private Random random;
-//    private LaneType myLane;
-
     private Point2D[] waypoints;
 
     private enum MovingState {STABLE_PATH, TO_BONUS}
-
-//    private Map<LaneType, Point2D> bonusesByLane = new EnumMap<>(LaneType.class);
 
     private Point2D previousPosition = new Point2D(0, 0);
 
@@ -90,8 +78,9 @@ public final class MyStrategy implements Strategy {
         if (wizardState == null) {
             VISUALIZER = new DebugVisualizer();
 
-            wizardState = WizardState.CAPTURE;
-            capturedZones = Arrays.asList(Zones.HOME, Zones.MIDDLE_FOREFRONT_1, Zones.MIDDLE_FOREFRONT_2, Zones.CENTER);
+            wizardState = WizardState.WALKING;
+            capturedZones = Arrays.asList(Zones.HOME, Zones.MIDDLE_FOREFRONT_1, Zones.MIDDLE_FOREFRONT_2, Zones.CENTER,
+                    Zones.ENEMY_MIDDLE_FOREFRONT_2, Zones.ENEMY_MIDDLE_FOREFRONT_1, Zones.ENEMY_HOME);
             mySkillBranch = FROST_BOLT_BRANCH;
             mySecondSkillBranch = STAFF_AND_FIREBALL_BRANCH;
             favoriteActionType = ActionType.FROST_BOLT;
@@ -186,9 +175,10 @@ public final class MyStrategy implements Strategy {
 //            bonusesByLane.put(LaneType.MIDDLE, new Point2D(1200, 1200));
 //            bonusesByLane.put(LaneType.BOTTOM, new Point2D(2800, 2800));
         }
-        behaviours = new HashMap<>();
-        behaviours.put(WizardState.CAPTURE, new CaptureBehaviour(self, world, game, move, this));
+        behaviours = new EnumMap<>(WizardState.class);
+        behaviours.put(WizardState.WALKING, new WalkingBehaviour(self, world, game, move, this));
         behaviours.put(WizardState.PROTECTION, new ProtectionBehaviour(self, world, game, move, this));
+        behaviours.put(WizardState.PUSHING, new PushingBehaviour(self, world, game, move, this));
 
         updateCurrentZoneNumber();
         statisticCollector = new StatisticCollector(self, world);
@@ -220,6 +210,10 @@ public final class MyStrategy implements Strategy {
         return statisticCollector;
     }
 
+    public void setWizardState(WizardState wizardState) {
+        this.wizardState = wizardState;
+    }
+
     private void initializeTick(Wizard self, World world, Game game, Move move) {
         this.self = self;
         this.world = world;
@@ -244,69 +238,6 @@ public final class MyStrategy implements Strategy {
 //        if (movingState == MovingState.STABLE_PATH) {
 //            //todo ожидание миньёнов у башни
 //            //todo не пытаться отступать внутри квадрата 150х150
-//            List<LivingUnit> sortedByWeakFactorNearstEnemies = getSortedByWeakFactorNearstEnemies();
-//            LivingUnit nearestTarget = sortedByWeakFactorNearstEnemies.isEmpty() ? null : sortedByWeakFactorNearstEnemies.get(0);
-//            if ((self.getX() <= 600 && self.getY() <= 600 && (nearestTarget == null || nearestTarget.getX() > 900)) ||
-//                    (self.getX() >= game.getMapSize() - 600 && self.getY() >= game.getMapSize() - 600 && (nearestTarget == null || nearestTarget.getY() <= 3500))) {
-//                if ((world.getTickIndex() + 100) / 2500 > lastTickCheck) {
-//                    movingState = MovingState.TO_BONUS;
-//                    bonusIsChecked = false;
-//                    lastTickCheck++;
-//                    goTo(getNextWaypointToBonus());
-//                    return;
-//                }
-//            }
-//
-//
-//            // Если видим противника ... //todo не только ближайший, но и с меньшим здоровьем
-//            boolean alliesOwnTerritory = statisticCollector.superiorityOfAllies() > 0.75;
-//            if (nearestTarget != null && alliesOwnTerritory) {
-//                double distance = self.getDistanceTo(nearestTarget);
-//
-//                if (distance <= self.getCastRange()) {
-//
-//                    // ... и он в пределах досягаемости наших заклинаний, ...
-//
-//                    double angle = self.getAngleTo(nearestTarget);
-//
-//                    if (self.getLife() / self.getMaxLife() > 0.6) {
-//                        if (nearestTarget.getLife() - game.getMagicMissileDirectDamage() < game.getMagicMissileDirectDamage()) {
-//                            if (distance > self.getCastRange() / 2) {
-//                                //подходим ближе, чтобы смочь добить
-//                                goTo(getNextWaypoint());
-//                                return;
-//                            }
-//                        }
-//                    }
-//
-//                    // ... то поворачиваемся к цели.
-//                    move.setTurn(angle);
-//
-//                    // Если цель перед нами, ...
-//                    if (StrictMath.abs(angle) < game.getStaffSector() / 2.0D) {
-//                        // ... то атакуем.
-//                        move.setCastAngle(angle);
-//                        move.setMinCastDistance(distance - nearestTarget.getRadius() + game.getMagicMissileRadius());
-//
-//                        if (game.isSkillsEnabled()) {
-//                            int fireballRemainingCooldown = self.getRemainingCooldownTicksByAction()[ActionType.FIREBALL.ordinal()];
-//                            int maxCooldown = Math.max(fireballRemainingCooldown, self.getRemainingActionCooldownTicks());
-//                            if (self.getLevel() >= 16 && maxCooldown == 0) {
-//                                move.setAction(ActionType.FIREBALL);
-//                                return;
-//                            }
-//                            int frostBoltRemainingCooldown = self.getRemainingCooldownTicksByAction()[ActionType.FROST_BOLT.ordinal()];
-//                            maxCooldown = Math.max(frostBoltRemainingCooldown, self.getRemainingActionCooldownTicks());
-//                            if (((damager && self.getLevel() >= 6) || (!damager && self.getLevel() >= 11)) && maxCooldown == 0) {
-//                                move.setAction(ActionType.FROST_BOLT);
-//                                return;
-//                            }
-//                        }
-//                        move.setAction(ActionType.MAGIC_MISSILE);
-//                    }
-//                    return;
-//                }
-//            }
 //
 //            if (!alliesOwnTerritory) {
 //                goTo(getPreviousWaypoint());
@@ -425,12 +356,12 @@ public final class MyStrategy implements Strategy {
     private void printDebugInformation() {
         if (!VISUALIZER.isInitialized()) return;
         for (Wizard wizard : world.getWizards()) {
-            if (wizard.isMaster()) {
+//            if (wizard.isMaster()) {
                 VISUALIZER.text(wizard.getX() + wizard.getRadius(),
                         wizard.getY() + wizard.getRadius(),
                         wizard.getX() + " - " + wizard.getY(),
                         Color.BLACK);
-                break;
+//                break;
 //                if (Zones.HOME.contains(new Point2D(wizard.getX(), wizard.getY()))) {
 //                    VISUALIZER.fillCircle(wizard.getX() - wizard.getRadius(), wizard.getY() + wizard.getRadius(), 2, Color.GREEN);
 //                    VISUALIZER.drawZone(Zones.HOME, Color.GREEN);
@@ -443,7 +374,7 @@ public final class MyStrategy implements Strategy {
 //                } else {
 //                    VISUALIZER.fillCircle(wizard.getX() - wizard.getRadius(), wizard.getY() + wizard.getRadius(), 2, Color.RED);
 //                }
-            }
+//            }
         }
     }
 
@@ -619,7 +550,7 @@ public final class MyStrategy implements Strategy {
                 }
                 VISUALIZER.drawZone(statisticEntry.getKey(), zoneColor);
 
-                printDebugInformation();
+//                printDebugInformation();
             }
         }
 
@@ -726,38 +657,4 @@ public final class MyStrategy implements Strategy {
         }
         return nearestTarget;
     }
-
-    private List<LivingUnit> getSortedByWeakFactorNearstEnemies() {
-        List<LivingUnit> targets = new ArrayList<>();
-        List<Building> buildings = Arrays.asList(world.getBuildings());
-        targets.addAll(buildings);
-        Map<LivingUnit, Integer> weights = new HashMap<>();
-        for (Building building : buildings) {
-            weights.put(building, 1);
-        }
-        List<Wizard> wizards = Arrays.asList(world.getWizards());
-        targets.addAll(wizards);
-        for (Wizard wizard : wizards) {
-            weights.put(wizard, 2);
-        }
-        List<Minion> minions = Arrays.asList(world.getMinions());
-        targets.addAll(minions);
-        for (Minion minion : minions) {
-            weights.put(minion, 3);
-        }
-        return targets.stream().filter(target -> {
-            return target.getFaction() != Faction.NEUTRAL && target.getFaction() != self.getFaction() && self.getDistanceTo(target) <= self.getCastRange();
-        }).sorted((target1, target2) -> {
-            int weightsCompare = Integer.compare(weights.get(target1), weights.get(target2));
-            if (weightsCompare == 0) {
-                int lifeCompare = Integer.compare(target1.getLife(), target2.getLife());
-                if (lifeCompare == 0) {
-                    return Double.compare(self.getDistanceTo(target1), self.getDistanceTo(target2));
-                }
-                return lifeCompare;
-            }
-            return weightsCompare;
-        }).collect(Collectors.toList());
-    }
-
 }

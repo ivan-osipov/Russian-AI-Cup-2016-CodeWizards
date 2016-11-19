@@ -11,11 +11,9 @@ public class GameMapGraph {
 
     private boolean[][] approachibilityMatrix;
 
-    private double[] nodesMarks;
     private Integer[] approachibilityStepsArray;
-    private Map<Node, Integer> nodeIndexes;
 
-    int INF = Integer.MAX_VALUE / 2;
+    private Map<Node, Integer> nodeIndexes;
 
     public GameMapGraph() {
         cleanAll();
@@ -26,6 +24,17 @@ public class GameMapGraph {
         nodes = new ArrayList<>();
         adjacentNodes = new HashMap<>();
         nodeIndexes = new HashMap<>();
+    }
+
+    public GameMapGraph copy() {
+        GameMapGraph copy = new GameMapGraph();
+        for (Node node : nodes) {
+            copy.addNode(node);
+        }
+        for (Edge edge : edges) {
+            copy.addEdge(edge);
+        }
+        return copy;
     }
 
     public List<Node> findBestWayDijkstra(Node source, Node target) {
@@ -152,7 +161,6 @@ public class GameMapGraph {
 
     private void approachibilityMatrixInit() {
         approachibilityMatrix = new boolean[nodes.size()][nodes.size()];
-        nodesMarks = new double[nodes.size()];
         for (int i = 0; i < approachibilityMatrix.length; i++) {
             Arrays.fill(approachibilityMatrix[i], false);
         }
