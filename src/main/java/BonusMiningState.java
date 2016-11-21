@@ -1,0 +1,3 @@
+public enum BonusMiningState {
+    HOPE_OF_TAKE, FIND_FIRST, INTERRUPTED, FIND_SECOND, END_OF_MINING
+}

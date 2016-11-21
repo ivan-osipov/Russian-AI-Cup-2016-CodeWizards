@@ -93,4 +93,7 @@ public class Zones {
         return new Point2D(MAP_SIZE - point.getX(), MAP_SIZE - point.getY());
     }
 
+    public static boolean atJungle(Point2D myPos) {
+        return !Zones.ALL_STATIC.stream().anyMatch(zone -> zone.contains(myPos));
+    }
 }

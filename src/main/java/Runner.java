@@ -10,7 +10,12 @@ public final class Runner {
     private final String token;
 
     public static void main(String[] args) throws IOException {
-        new Runner(args.length == 3 ? args : new String[]{"127.0.0.1", "31001", "0000000000000000"}).run();
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        new Runner(args.length == 3 ? args : new String[]{"127.0.0.1", "33001", "0000000000000000"}).run();
     }
 
     private Runner(String[] args) throws IOException {

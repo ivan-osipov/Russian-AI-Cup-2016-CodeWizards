@@ -39,11 +39,11 @@ public abstract class Behaviour {
     abstract void perform();
 
     public void doIt() {
-        System.out.println(self.getX() + "   " + self.getY());
-        if (!(this instanceof WalkingBehaviour) && strategy.getStartPoint().equals(currentPosition)) {
-            strategy.setWizardState(WizardState.WALKING);
-            return;
-        }
+//        System.out.println(self.getX() + "   " + self.getY());
+//        if (!(this instanceof WalkingBehaviour) && strategy.getStartPoint().equals(currentPosition)) {
+//            strategy.setWizardState(WizardState.WALKING);
+//            return;
+//        }
         zoneStatistics = strategy.getStatisticCollector().collectZoneStatistic();
         Minion nearestDangerousMinion = minionsAreNear();
         if (towerAndWizardCanKill() || nearestDangerousMinion != null) {
@@ -67,10 +67,10 @@ public abstract class Behaviour {
         int remainedTimeToBonusAppearance = game.getBonusAppearanceIntervalTicks() -
                 (world.getTickIndex() % game.getBonusAppearanceIntervalTicks());
         if (remainedTimeToBonusAppearance <= wayTimeToBonus) {
+            BonusMiningBehaviour behaviour = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
+            behaviour.setPreIterationState(true);
             strategy.setWizardState(WizardState.BONUS_MINING);
             strategy.setWayToBonus(calculateWayToBonus());
-            BonusMiningBehaviour nextBehaviour = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
-            nextBehaviour.reset();
             return;
         }
 
@@ -275,10 +275,11 @@ public abstract class Behaviour {
     }
 
     protected void updateStayingTime() {
-        if (previousPoint.equals(new Point2D(self.getX(), self.getY()))) {
+        if (previousPoint.equals(strategy.getCurrentPosition())) {
             stayingTime++;
         } else {
             stayingTime = 0;
+            previousPoint = strategy.getCurrentPosition();
         }
         System.out.println("Staying time: " + stayingTime);
     }
@@ -377,7 +378,7 @@ public abstract class Behaviour {
         return Stream.concat(
                 Arrays.stream(world.getWizards()).filter(wizard -> wizard.getFaction() != self.getFaction()),
                 Arrays.stream(world.getMinions()).filter(minion -> minion.getFaction() != self.getFaction() && minion.getFaction() != Faction.NEUTRAL)
-        ).min((e1, e2) -> Double.compare(e1.getDistanceTo(self), e1.getDistanceTo(self))).orElse(null);
+        ).min((e1, e2) -> Double.compare(e1.getDistanceTo(self), e2.getDistanceTo(self))).orElse(null);
     }
 
     protected double calculateForwardStrafeSpeed(double speed) {

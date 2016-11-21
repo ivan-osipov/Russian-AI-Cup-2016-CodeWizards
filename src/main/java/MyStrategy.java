@@ -21,6 +21,7 @@ public final class MyStrategy implements Strategy {
     private Point2D currentPosition;
     private List<Zone> capturedZones;
     private int currentZoneNumber;
+    private int battleZoneNumber;
     private EnumMap<WizardState, Behaviour> behaviours;
 
     private List<Point2D> wayToBonus;
@@ -29,6 +30,8 @@ public final class MyStrategy implements Strategy {
 
     private GameMapGraph graph = new GameMapGraph();
     private GraphMapper graphMapper = new GraphMapper();
+
+    private int bonusIteration;
 
     private final List<SkillType> skillTypesToLearn = new ArrayList<>();
 
@@ -81,28 +84,39 @@ public final class MyStrategy implements Strategy {
             behaviours.put(WizardState.BONUS_MINING, new BonusMiningBehaviour(self, world, game, move, this));
         }
         behaviours.values().forEach(b -> b.update(self, world, move));
-        updateBonusStatus();
+//        updateBonusStatus();
         currentPosition = new Point2D(self.getX(), self.getY());
 
-        updateCurrentZoneNumber();
         statisticCollector = new StatisticCollector(self, world);
+        updateCurrentZoneNumber();
+        updateBattleZoneNumber();
         drawStatistic(statisticCollector.collectZoneStatistic());
     }
 
-    private void updateBonusStatus() {
-        BonusMiningBehaviour bonusMiningBehaviour = (BonusMiningBehaviour) behaviours.get(WizardState.BONUS_MINING);
-        List<Integer> bonusRespTimes = bonusMiningBehaviour.getBonusRespTimes();
-        System.out.println("Next bonus time " + bonusRespTimes.get(0));
-        if(!bonusRespTimes.isEmpty() && bonusRespTimes.get(0).equals(world.getTickIndex())) {
-            bonusMiningBehaviour.nowTimeOfOccurrence();
-            bonusRespTimes.remove(0);
-        }
-    }
+//    private void updateBonusStatus() {
+//        BonusMiningBehaviour bonusMiningBehaviour = (BonusMiningBehaviour) behaviours.get(WizardState.BONUS_MINING);
+//        List<Integer> bonusRespTimes = bonusMiningBehaviour.getBonusIterations();
+//        System.out.println("Next bonus time " + bonusRespTimes.get(0));
+//        if(!bonusRespTimes.isEmpty() && bonusRespTimes.get(0).equals(world.getTickIndex())) {
+//            bonusMiningBehaviour.updateTimeOfOccurrence();
+//            bonusRespTimes.remove(0);
+//        }
+//    }
 
     private void updateCurrentZoneNumber() {
         for (int i = 0; i < capturedZones.size(); i++) {
-            if (capturedZones.get(i).contains(new Point2D(self.getX(), self.getY()))) {
+            if (capturedZones.get(i).contains(new Point2D(self))) {
                 currentZoneNumber = i;
+                return;
+            }
+        }
+    }
+
+    private void updateBattleZoneNumber() {
+        Map<Zone, ZoneStatistic> zoneStatistic = statisticCollector.collectZoneStatistic();
+        for (int i = 0; i < capturedZones.size(); i++) {
+            if(zoneStatistic.get(capturedZones.get(i)).getEnemies().size() > 0) {
+                battleZoneNumber = i;
                 return;
             }
         }
@@ -110,6 +124,10 @@ public final class MyStrategy implements Strategy {
 
     public int getCurrentZoneNumber() {
         return currentZoneNumber;
+    }
+
+    public int getBattleZoneNumber() {
+        return battleZoneNumber;
     }
 
     public Point2D getCurrentPosition() {

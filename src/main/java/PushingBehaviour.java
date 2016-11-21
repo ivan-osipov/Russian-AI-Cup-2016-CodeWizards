@@ -11,34 +11,31 @@ public class PushingBehaviour extends Behaviour {
 
     @Override
     public void perform() {
-        if(safe()) {
-            BonusMiningBehaviour bonusMining = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
-            if(bonusMining.isInterrupted()) {
-                strategy.setWizardState(WizardState.BONUS_MINING);
-            }
+//        if(safe()) {
+//            BonusMiningBehaviour bonusMining = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
+//            if(bonusMining.isInterrupted()) { //todo возврат к бонусам
+//                strategy.setWizardState(WizardState.BONUS_MINING);
+//            }
+//        }
+        if(world.getTickIndex() % 3 == 0) {
+            System.out.println("Pushing");
         }
-        if(safe() && nextSafe()) {
-            strategy.setWizardState(WizardState.WALKING);
-            return;
-        }
-
-        System.out.println("Pushing");
         List<LivingUnit> sortedByWeakFactorNearstEnemies = getSortedByWeakFactorNearstEnemies();
         LivingUnit nearestTarget = sortedByWeakFactorNearstEnemies.isEmpty() ? null : sortedByWeakFactorNearstEnemies.get(0);
 
-        boolean alliesOwnTerritory = strategy.getStatisticCollector().superiorityOfAllies() > 0.75;
-        if (nearestTarget != null && alliesOwnTerritory) {
+        boolean alliesOwnTerritory = strategy.getStatisticCollector().superiorityOfAllies() > 1.2;
+        if (nearestTarget != null) {
             double distance = self.getDistanceTo(nearestTarget);
 
             if (distance <= self.getCastRange()) {
 
                 double angle = self.getAngleTo(nearestTarget);
 
-                if (self.getLife() / self.getMaxLife() > 0.4) {
+                if (alliesOwnTerritory && self.getLife() / self.getMaxLife() > 0.4) {
                     if (nearestTarget.getLife() - game.getMagicMissileDirectDamage() < game.getMagicMissileDirectDamage()) {
                         if (distance > self.getCastRange() / 2) {
                             //подходим ближе, чтобы смочь добить
-                            goTo(new Point2D(nearestTarget.getX(), nearestTarget.getY()));
+                            goTo(new Point2D(nearestTarget));
                             return;
                         }
                     }
@@ -67,10 +64,22 @@ public class PushingBehaviour extends Behaviour {
                     move.setAction(ActionType.MAGIC_MISSILE);
                 }
             }
-        } else if(nearestTarget == null) {
-            if(validZone(strategy.getCurrentZoneNumber() + 1)) {
-                Point2D targetPoint = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber() + 1).getCentroid();
+        } else {
+            if(safe() && nextSafe()) {
+                strategy.setWizardState(WizardState.WALKING);
+                return;
+            }
+            if(safe() && strategy.getCurrentZoneNumber() < strategy.getBattleZoneNumber()) {
+                if(validZone(strategy.getCurrentZoneNumber() + 1)) {
+                    Point2D targetPoint = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber() + 1).getCentroid();
+                    goTo(targetPoint);
+                }
+            } else if(!safe()) {
+                Point2D targetPoint = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber()).getCentroid();
                 goTo(targetPoint);
+            } else {
+                //прошли мимо battleZone
+                goTo(strategy.getCapturedZones().get(strategy.getBattleZoneNumber()).getCentroid());
             }
         }
 

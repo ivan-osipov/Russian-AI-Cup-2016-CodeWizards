@@ -13,6 +13,11 @@ public class Point2D {
         this.y = y;
     }
 
+    public Point2D(Unit unit) {
+        this.x = unit.getX();
+        this.y = unit.getY();
+    }
+
     public double getX() {
         return x;
     }
@@ -70,9 +75,7 @@ public class Point2D {
 
         Point2D point2D = (Point2D) o;
 
-        if (Double.compare(point2D.x, x) != 0) return false;
-        return Double.compare(point2D.y, y) == 0;
-
+        return Math.abs(point2D.x - x) <= 1 && Math.abs(point2D.y - y) <= 1;
     }
 
     @Override
