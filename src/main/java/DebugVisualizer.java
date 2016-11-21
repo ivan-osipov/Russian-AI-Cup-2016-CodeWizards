@@ -5,8 +5,12 @@ public class DebugVisualizer {
     private Object visualClient;
     private Class<?> visualClientClass;
     private boolean initialized = false;
+    private boolean repeater = false;
 
     public DebugVisualizer() {
+        if(repeater) {
+            return;
+        }
         try {
             visualClientClass = Class.forName("debug.VisualClient");
             if(visualClientClass != null) {
