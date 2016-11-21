@@ -1,5 +1,8 @@
 import model.Unit;
 
+import static java.lang.StrictMath.PI;
+import static java.lang.StrictMath.atan2;
+
 public class Point2D {
 
     private final double x;
@@ -28,6 +31,36 @@ public class Point2D {
 
     public double getDistanceTo(Unit unit) {
         return getDistanceTo(unit.getX(), unit.getY());
+    }
+
+    public double getAngleTo(double x, double y, double angle) {
+        double absoluteAngleTo = atan2(y - this.y, x - this.x);
+        double relativeAngleTo = absoluteAngleTo - angle;
+
+        while (relativeAngleTo > PI) {
+            relativeAngleTo -= 2.0D * PI;
+        }
+
+        while (relativeAngleTo < -PI) {
+            relativeAngleTo += 2.0D * PI;
+        }
+
+        return relativeAngleTo;
+    }
+
+    public double getAngleTo(Point2D point, double angle) {
+        double absoluteAngleTo = atan2(point.y - this.y, point.x - this.x);
+        double relativeAngleTo = absoluteAngleTo - angle;
+
+        while (relativeAngleTo > PI) {
+            relativeAngleTo -= 2.0D * PI;
+        }
+
+        while (relativeAngleTo < -PI) {
+            relativeAngleTo += 2.0D * PI;
+        }
+
+        return relativeAngleTo;
     }
 
     @Override

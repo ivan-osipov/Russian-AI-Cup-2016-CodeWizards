@@ -11,38 +11,30 @@ public class PushingBehaviour extends Behaviour {
 
     @Override
     public void perform() {
+        if(safe()) {
+            BonusMiningBehaviour bonusMining = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
+            if(bonusMining.isInterrupted()) {
+                strategy.setWizardState(WizardState.BONUS_MINING);
+            }
+        }
         if(safe() && nextSafe()) {
             strategy.setWizardState(WizardState.WALKING);
             return;
         }
+
         System.out.println("Pushing");
         List<LivingUnit> sortedByWeakFactorNearstEnemies = getSortedByWeakFactorNearstEnemies();
         LivingUnit nearestTarget = sortedByWeakFactorNearstEnemies.isEmpty() ? null : sortedByWeakFactorNearstEnemies.get(0);
-        //to bonus
-//            if ((self.getX() <= 600 && self.getY() <= 600 && (nearestTarget == null || nearestTarget.getX() > 900)) ||
-//                    (self.getX() >= game.getMapSize() - 600 && self.getY() >= game.getMapSize() - 600 && (nearestTarget == null || nearestTarget.getY() <= 3500))) {
-//                if ((world.getTickIndex() + 100) / 2500 > lastTickCheck) {
-//                    movingState = MovingState.TO_BONUS;
-//                    bonusIsChecked = false;
-//                    lastTickCheck++;
-//                    goTo(getNextWaypointToBonus());
-//                    return;
-//                }
-//            }
 
-
-        // Если видим противника ... //todo не только ближайший, но и с меньшим здоровьем
         boolean alliesOwnTerritory = strategy.getStatisticCollector().superiorityOfAllies() > 0.75;
         if (nearestTarget != null && alliesOwnTerritory) {
             double distance = self.getDistanceTo(nearestTarget);
 
             if (distance <= self.getCastRange()) {
 
-                // ... и он в пределах досягаемости наших заклинаний, ...
-
                 double angle = self.getAngleTo(nearestTarget);
 
-                if (self.getLife() / self.getMaxLife() > 0.6) {
+                if (self.getLife() / self.getMaxLife() > 0.4) {
                     if (nearestTarget.getLife() - game.getMagicMissileDirectDamage() < game.getMagicMissileDirectDamage()) {
                         if (distance > self.getCastRange() / 2) {
                             //подходим ближе, чтобы смочь добить
@@ -52,12 +44,9 @@ public class PushingBehaviour extends Behaviour {
                     }
                 }
 
-                // ... то поворачиваемся к цели.
                 move.setTurn(angle);
 
-                // Если цель перед нами, ...
                 if (StrictMath.abs(angle) < game.getStaffSector() / 2.0D) {
-                    // ... то атакуем.
                     move.setCastAngle(angle);
                     move.setMinCastDistance(distance - nearestTarget.getRadius() + game.getMagicMissileRadius());
 
@@ -77,7 +66,6 @@ public class PushingBehaviour extends Behaviour {
                     }
                     move.setAction(ActionType.MAGIC_MISSILE);
                 }
-                return;
             }
         } else if(nearestTarget == null) {
             if(validZone(strategy.getCurrentZoneNumber() + 1)) {

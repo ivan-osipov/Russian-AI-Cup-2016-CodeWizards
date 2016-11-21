@@ -19,6 +19,15 @@ public class Points {
 
     public static Point2D UPPER_BONUS_POINT = new Point2D(1200, 1200);
 
+    public static List<Point2D> ENEMY_HOME_ZONE_POINTS = new ArrayList<>();
+
+    public static List<Point2D> ENEMY_TOP_START_POINTS = new ArrayList<>();
+
+    public static List<Point2D> ENEMY_MIDDLE_START_POINTS = new ArrayList<>();
+
+    public static List<Point2D> ENEMY_BOTTOM_START_POINTS = new ArrayList<>();
+
+
     public static List<Point2D> CHECK_POINTS = new ArrayList<>();
 
     public static List<Vector2D> CHECK_POINT_EDGES = new ArrayList<>();
@@ -36,6 +45,14 @@ public class Points {
         fillLowerBonusZonePoints();
 
         fillUpperBonusZonePoints();
+
+        fillEnemyHomeZonePoints();
+
+        fillEnemyTopLineStart();
+
+        fillEnemyMiddleLineStart();
+
+        fillEnemyBottomLineStart();
 
         fillCheckPoints();
 
@@ -61,6 +78,84 @@ public class Points {
         //upper-bonus-top
         CHECK_POINT_EDGES.add(new Vector2D(UPPER_BONUS_ZONE_POINTS.get(2), TOP_START_POINTS.get(1)));
 
+        //enemy points
+        //home-top
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(3), ENEMY_TOP_START_POINTS.get(0)));
+        //home-middle
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(4), ENEMY_MIDDLE_START_POINTS.get(0)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(5), ENEMY_MIDDLE_START_POINTS.get(0)));
+        //home-bottom
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(6), ENEMY_BOTTOM_START_POINTS.get(0)));
+
+        //middle-lower-bonus
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(2), LOWER_BONUS_ZONE_POINTS.get(0)));//переход от центра к низу
+
+        //lower-bonus-bottom
+        CHECK_POINT_EDGES.add(new Vector2D(LOWER_BONUS_ZONE_POINTS.get(2), ENEMY_TOP_START_POINTS.get(1)));
+        //upper-bonus-middle
+        CHECK_POINT_EDGES.add(new Vector2D(UPPER_BONUS_ZONE_POINTS.get(0), ENEMY_MIDDLE_START_POINTS.get(1)));
+        //upper-bonus-top
+        CHECK_POINT_EDGES.add(new Vector2D(UPPER_BONUS_ZONE_POINTS.get(2), ENEMY_BOTTOM_START_POINTS.get(2)));
+
+
+        CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(1), ENEMY_MIDDLE_START_POINTS.get(1)));
+        CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(2), ENEMY_MIDDLE_START_POINTS.get(2)));
+        CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(1), ENEMY_MIDDLE_START_POINTS.get(2)));
+        CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(2), ENEMY_MIDDLE_START_POINTS.get(1)));
+    }
+
+    private static void fillEnemyHomeZonePoints() {
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(0)));//0
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(1)));//1
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(2)));//2
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(0), ENEMY_HOME_ZONE_POINTS.get(1)));
+
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(3)));//3
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(1), ENEMY_HOME_ZONE_POINTS.get(3)));
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(4)));//4
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(1), ENEMY_HOME_ZONE_POINTS.get(4)));
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(5)));//5
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(1), ENEMY_HOME_ZONE_POINTS.get(5)));
+
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(0), ENEMY_HOME_ZONE_POINTS.get(2)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(2), ENEMY_HOME_ZONE_POINTS.get(5)));
+        ENEMY_HOME_ZONE_POINTS.add(convertToEnemyPoint(HOME_ZONE_POINTS.get(6)));//6
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(2), ENEMY_HOME_ZONE_POINTS.get(6)));
+
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(3), ENEMY_HOME_ZONE_POINTS.get(4)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(4), ENEMY_HOME_ZONE_POINTS.get(5)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(5), ENEMY_HOME_ZONE_POINTS.get(6)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(3), ENEMY_HOME_ZONE_POINTS.get(5)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(3), ENEMY_HOME_ZONE_POINTS.get(6)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_HOME_ZONE_POINTS.get(2), ENEMY_HOME_ZONE_POINTS.get(4)));
+    }
+
+    private static void fillEnemyTopLineStart() {
+        ENEMY_TOP_START_POINTS.add(convertToEnemyPoint(new Point2D(211, 2621)));//0
+        ENEMY_TOP_START_POINTS.add(convertToEnemyPoint(new Point2D(190, 1550)));//1
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_TOP_START_POINTS.get(0), ENEMY_TOP_START_POINTS.get(1)));
+    }
+
+    private static void fillEnemyMiddleLineStart() {
+        ENEMY_MIDDLE_START_POINTS.add(convertToEnemyPoint(new Point2D(1122, 2890)));//0
+        ENEMY_MIDDLE_START_POINTS.add(convertToEnemyPoint(new Point2D(1680, 2120)));//1
+        ENEMY_MIDDLE_START_POINTS.add(convertToEnemyPoint(new Point2D(1878, 2285)));//2
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(0), ENEMY_MIDDLE_START_POINTS.get(1)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(0), ENEMY_MIDDLE_START_POINTS.get(2)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(1), ENEMY_MIDDLE_START_POINTS.get(2)));//точки в начале "центра" рядом
+    }
+
+    private static void fillEnemyBottomLineStart() {
+        ENEMY_BOTTOM_START_POINTS.add(convertToEnemyPoint(new Point2D(1340, 3800)));//0
+        ENEMY_BOTTOM_START_POINTS.add(convertToEnemyPoint(new Point2D(2381, 3851)));//1
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_BOTTOM_START_POINTS.get(0), ENEMY_BOTTOM_START_POINTS.get(1)));
+
+        ENEMY_BOTTOM_START_POINTS.add(convertToEnemyPoint(new Point2D(3224, 3749)));//2
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_BOTTOM_START_POINTS.get(1), ENEMY_BOTTOM_START_POINTS.get(2)));
+    }
+
+    public static Point2D convertToEnemyPoint(Point2D point) {
+        return new Point2D(Zones.MAP_SIZE - point.getX(), Zones.MAP_SIZE - point.getY());
     }
 
     private static void fillCheckPoints() {
@@ -72,6 +167,10 @@ public class Points {
         CHECK_POINTS.addAll(UPPER_BONUS_ZONE_POINTS);
         CHECK_POINTS.add(LOWER_BONUS_POINT);
         CHECK_POINTS.add(UPPER_BONUS_POINT);
+        CHECK_POINTS.addAll(ENEMY_HOME_ZONE_POINTS);
+        CHECK_POINTS.addAll(ENEMY_TOP_START_POINTS);
+        CHECK_POINTS.addAll(ENEMY_MIDDLE_START_POINTS);
+        CHECK_POINTS.addAll(ENEMY_BOTTOM_START_POINTS);
     }
 
     private static void fillUpperBonusZonePoints() {
@@ -129,15 +228,12 @@ public class Points {
     }
 
     private static void fillMiddleLineStart() {
-
         MIDDLE_START_POINTS.add(new Point2D(1122, 2890));//0
         MIDDLE_START_POINTS.add(new Point2D(1680, 2120));//1
         MIDDLE_START_POINTS.add(new Point2D(1878, 2285));//2
         CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(0), MIDDLE_START_POINTS.get(1)));
         CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(0), MIDDLE_START_POINTS.get(2)));
         CHECK_POINT_EDGES.add(new Vector2D(MIDDLE_START_POINTS.get(1), MIDDLE_START_POINTS.get(2)));//точки в начале "центра" рядом
-
-
     }
 
     private static void fillBottomLineStart() {
