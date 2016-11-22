@@ -36,9 +36,10 @@ public class BonusMiningBehaviour extends Behaviour {
 
     @Override
     public void doIt() {
+        System.out.println("Current bonus iteration: " + currentBonusIteration);
+        updateTimeOfOccurrence();
         if (isDangerousAround()) return;
         currentBonusIteration = calculateCurrentBonusIteration();
-        updateTimeOfOccurrence();
         if (Zones.HOME.contains(strategy.getCurrentPosition()) || Zones.atJungle(strategy.getCurrentPosition())) {//если умер или застрял
             if(currentBonusIteration != null) {
                 System.out.println("Bonus mining iteration " + currentBonusIteration + " is interrupted");
@@ -56,15 +57,10 @@ public class BonusMiningBehaviour extends Behaviour {
         System.out.println("Bonus mining in progress");
         List<Point2D> wayToBonus = strategy.getWayToBonus();
         Point2D bonusPoint = wayToBonus.get(wayToBonus.size() - 1);
-        System.out.println("Current bonus iteration: " + currentBonusIteration);
         BonusIteration bonusIteration = bonusIterations.get(currentBonusIteration);
         System.out.println("State: " + bonusIteration.getState());
         switch (bonusIteration.getState()) {
             case HOPE_OF_TAKE:
-                if (bonusIterationMap.keySet().contains(world.getTickCount())) {
-                    bonusIteration.setState(BonusMiningState.FIND_FIRST);
-                    break;
-                }
                 if (Points.LOWER_BONUS_POINT.equals(bonusPoint)) {
                     wayToBonus = getReplaceLastPoint(wayToBonus, lowerWaitingPoint);
                     Point2D lastPoint = wayToBonus.get(wayToBonus.size() - 1);

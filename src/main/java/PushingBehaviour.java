@@ -35,7 +35,7 @@ public class PushingBehaviour extends Behaviour {
 
                 if (alliesOwnTerritory && self.getLife() / self.getMaxLife() > 0.4) {
                     if (nearestTarget.getLife() - game.getMagicMissileDirectDamage() < game.getMagicMissileDirectDamage()) {
-                        if (distance > self.getCastRange() / 2) {
+                        if (distance > self.getCastRange() / 1.5) {
                             //подходим ближе, чтобы смочь добить
                             goTo(new Point2D(nearestTarget));
                             return;

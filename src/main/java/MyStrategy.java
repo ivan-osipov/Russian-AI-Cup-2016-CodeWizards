@@ -65,7 +65,7 @@ public final class MyStrategy implements Strategy {
             wizardState = WizardState.WALKING;
             startPoint = new Point2D(self.getX(), self.getY());
             capturedZones = Arrays.asList(Zones.HOME, Zones.MIDDLE_FOREFRONT_1, Zones.MIDDLE_FOREFRONT_2, Zones.CENTER,
-                    Zones.ENEMY_MIDDLE_FOREFRONT_2, Zones.ENEMY_MIDDLE_FOREFRONT_1/*, Zones.ENEMY_HOME*/);
+                    Zones.ENEMY_MIDDLE_FOREFRONT_2, Zones.ENEMY_MIDDLE_FOREFRONT_1, Zones.ENEMY_HOME, Zones.ENEMY_LAST_HOME);
             mySkillBranch = FROST_BOLT_BRANCH;
             mySecondSkillBranch = STAFF_AND_FIREBALL_BRANCH;
 

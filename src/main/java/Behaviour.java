@@ -64,6 +64,14 @@ public abstract class Behaviour {
         if (enemiesCanKill() || nearestDangerousMinion != null) {
             if (nearestDangerousMinion != null) {
                 double angleToNearestMinion = self.getAngleTo(nearestDangerousMinion);
+                if(stayingTime > 50 && stayingTime < 60) {
+                    move.setTurn(angleToNearestMinion);
+                    if (StrictMath.abs(angleToNearestMinion) < game.getStaffSector() / 4.0D) {
+                        move.setSpeed(-getBackwardSpeed());
+                        move.setStrafeSpeed(calculateBackwardStrafeSpeed(move.getSpeed()));
+                    }
+                    return true;
+                }
                 if (angleToNearestMinion >= -Math.PI / 2 && angleToNearestMinion <= Math.PI / 2) {
                     goBackByLookAngle(angleToNearestMinion);
                     return true;
@@ -198,6 +206,20 @@ public abstract class Behaviour {
                         wizardDamage = Math.max(game.getMagicMissileDirectDamage(), wizardDamage);
                     }
                     potentialDamage += wizardDamage;
+                }
+            } else if(enemy instanceof Minion) {
+                Minion minion = (Minion) enemy;
+                double distanceToMe = minion.getDistanceTo(self);
+                if(minion.getType() == MinionType.ORC_WOODCUTTER) {
+                    double timeForRetreat = getTimeForRetreat(game.getOrcWoodcutterAttackRange(), distanceToMe, ticksInReserve);
+                    if (timeForRetreat < minion.getRemainingActionCooldownTicks()) {
+                        potentialDamage += game.getOrcWoodcutterDamage();
+                    }
+                } else {
+                    double timeForRetreat = getTimeForRetreat(game.getFetishBlowdartAttackRange(), distanceToMe, ticksInReserve);
+                    if (timeForRetreat < minion.getRemainingActionCooldownTicks()) {
+                        potentialDamage += (game.getOrcWoodcutterAttackRange() / 2);
+                    }
                 }
             }
         }

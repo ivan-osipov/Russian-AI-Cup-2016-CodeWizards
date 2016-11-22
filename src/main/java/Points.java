@@ -56,6 +56,8 @@ public class Points {
 
         fillCheckPoints();
 
+        //todo каждый 750й тик, если на вражеской территории отходить на безопасное расстояние
+
         //connection zones
         //home-top
         CHECK_POINT_EDGES.add(new Vector2D(HOME_ZONE_POINTS.get(3), TOP_START_POINTS.get(0)));
@@ -89,6 +91,12 @@ public class Points {
 
         //middle-lower-bonus
         CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(2), LOWER_BONUS_ZONE_POINTS.get(0)));//переход от центра к низу
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(1), LOWER_BONUS_ZONE_POINTS.get(0)));//переход от центра к низу
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(2), UPPER_BONUS_ZONE_POINTS.get(0)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(1), UPPER_BONUS_ZONE_POINTS.get(0)));
+        CHECK_POINT_EDGES.add(new Vector2D(ENEMY_MIDDLE_START_POINTS.get(1), LOWER_BONUS_POINT));
+        CHECK_POINT_EDGES.add(new Vector2D(UPPER_BONUS_POINT, UPPER_BONUS_ZONE_POINTS.get(0)));
+
 
         //lower-bonus-bottom
         CHECK_POINT_EDGES.add(new Vector2D(LOWER_BONUS_ZONE_POINTS.get(2), ENEMY_TOP_START_POINTS.get(1)));
