@@ -16,7 +16,7 @@ public abstract class Behaviour {
     protected Point2D currentPosition;
 
     protected MyStrategy strategy;
-    protected Map<Zone, ZoneStatistic> zoneStatistics;
+
 
     private Point2D previousPoint = new Point2D(0, 0);
     private int stayingTime = 0;
@@ -44,25 +44,7 @@ public abstract class Behaviour {
 //            strategy.setWizardState(WizardState.WALKING);
 //            return;
 //        }
-        zoneStatistics = strategy.getStatisticCollector().collectZoneStatistic();
-        Minion nearestDangerousMinion = minionsAreNear();
-        if (towerAndWizardCanKill() || nearestDangerousMinion != null) {
-            if (nearestDangerousMinion != null) {
-                double angleToNearestMinion = self.getAngleTo(nearestDangerousMinion);
-                if (angleToNearestMinion >= -Math.PI / 2 && angleToNearestMinion <= Math.PI / 2) {
-                    goBackByLookAngle(angleToNearestMinion);
-                    return;
-                } else {
-                    goByLookAngle(angleToNearestMinion);
-                    return;
-                }
-            }
-            if (!safe() && !nextSafe()) {
-                Zone nearSafeZone = findNearSafeZone();
-                goBack(nearSafeZone.getCentroid());
-                return;
-            }
-        }
+        if (isDangerousAround()) return;
         double wayTimeToBonus = calculateTimeForWayToBonus();
         int remainedTimeToBonusAppearance = game.getBonusAppearanceIntervalTicks() -
                 (world.getTickIndex() % game.getBonusAppearanceIntervalTicks());
@@ -75,6 +57,28 @@ public abstract class Behaviour {
         }
 
         perform();
+    }
+
+    protected boolean isDangerousAround() {
+        Minion nearestDangerousMinion = minionsAreNear();
+        if (enemiesCanKill() || nearestDangerousMinion != null) {
+            if (nearestDangerousMinion != null) {
+                double angleToNearestMinion = self.getAngleTo(nearestDangerousMinion);
+                if (angleToNearestMinion >= -Math.PI / 2 && angleToNearestMinion <= Math.PI / 2) {
+                    goBackByLookAngle(angleToNearestMinion);
+                    return true;
+                } else {
+                    goByLookAngle(angleToNearestMinion);
+                    return true;
+                }
+            }
+            if (!safe() && !nextSafe()) {
+                Zone nearSafeZone = findNearSafeZone();
+                goBack(nearSafeZone.getCentroid());
+                return true;
+            }
+        }
+        return false;
     }
 
     protected double calculateTimeForWayToBonus() {
@@ -148,11 +152,12 @@ public abstract class Behaviour {
         }
     }
 
-    protected boolean towerAndWizardCanKill() {
+    protected boolean enemiesCanKill() {
         if (self.getLife() > 0.7 * self.getMaxLife()) {
             return false;
         }
         List<LivingUnit> enemies = getNearDangerousEnemies();
+        int ticksInReserve = 5;
         double potentialDamage = 0;
         for (LivingUnit enemy : enemies) {
             if (enemy instanceof Building) {
@@ -160,9 +165,11 @@ public abstract class Behaviour {
                 if (building.getType() == BuildingType.GUARDIAN_TOWER) {
                     double enemyAttackRange = game.getGuardianTowerAttackRange();
                     double distanceToMe = building.getDistanceTo(self);
-                    double timeForRetreat = getTimeForRetreat(enemyAttackRange, distanceToMe);
-                    if (distanceToMe - enemyAttackRange * 0.2 <= enemyAttackRange
-                            && (timeForRetreat < building.getRemainingActionCooldownTicks() + getBackwardSpeed() * 2)) {
+                    double timeForRetreat = getTimeForRetreat(enemyAttackRange, distanceToMe, ticksInReserve);
+                    if(timeForRetreat == 0) {
+                        continue;
+                    }
+                    if (timeForRetreat < building.getRemainingActionCooldownTicks()) {
                         potentialDamage += game.getGuardianTowerDamage();
                     }
                 }
@@ -171,63 +178,109 @@ public abstract class Behaviour {
                 List<SkillType> skillTypes = Arrays.asList(wizard.getSkills());
                 double wizardDamage = 0;
                 double distanceToMe = wizard.getDistanceTo(self);
-                double timeForRetreat = getTimeForRetreat(game.getWizardCastRange(), distanceToMe);
-                if (distanceToMe - game.getWizardCastRange() * 0.2 <= game.getWizardCastRange()
-                        && timeForRetreat < wizard.getRemainingActionCooldownTicks() + getBackwardSpeed() * 2) {
+                double timeForRetreat = getTimeForRetreat(game.getWizardCastRange(), distanceToMe, ticksInReserve);
+                if(timeForRetreat == 0) {
+                    continue;
+                }
+                if (timeForRetreat < wizard.getRemainingActionCooldownTicks()) {
+                    double manaAdd = calculateManaAddAfterTicks(ticksInReserve, wizard.getLevel());
                     if (skillTypes.contains(SkillType.FROST_BOLT)
-                            && wizard.getMana() >= game.getFrostBoltManacost()
+                            && wizard.getMana() + manaAdd >= game.getFrostBoltManacost()
                             && wizard.getRemainingCooldownTicksByAction()[ActionType.FROST_BOLT.ordinal()] < timeForRetreat) {
                         wizardDamage = Math.max(game.getFrostBoltDirectDamage(), wizardDamage);
                     }
                     if (skillTypes.contains(SkillType.FIREBALL)
-                            && wizard.getMana() >= game.getFireballManacost()
+                            && wizard.getMana() + manaAdd >= game.getFireballManacost()
                             && wizard.getRemainingCooldownTicksByAction()[ActionType.FIREBALL.ordinal()] < timeForRetreat) {
                         wizardDamage = Math.max(game.getFireballExplosionMaxDamage(), wizardDamage);
                     }
-                    if (wizard.getMana() >= game.getMagicMissileManacost()) {
+                    if (wizard.getMana() + manaAdd >= game.getMagicMissileManacost()) {
                         wizardDamage = Math.max(game.getMagicMissileDirectDamage(), wizardDamage);
                     }
                     potentialDamage += wizardDamage;
                 }
             }
         }
-        return potentialDamage >= self.getLife() - self.getMaxLife() * LOW_HP_FACTOR;
+        return potentialDamage >= minLife();
     }
 
-    private double getTimeForRetreat(double enemyAttackRange, double distanceToMe) {
-        double distanceToSave = enemyAttackRange - distanceToMe;
+    private double minLife() {
+        return self.getLife() - self.getMaxLife() * LOW_HP_FACTOR;
+    }
+
+    private double calculateManaAddAfterTicks(int ticks, int wizardLevel) {
+        double wizardManaRegeneration = game.getWizardBaseManaRegeneration();
+        wizardManaRegeneration += game.getWizardManaRegenerationGrowthPerLevel() * (wizardLevel - 1);
+        return wizardManaRegeneration;
+    }
+
+    protected double calculateMaxRange(List<LivingUnit> enemies) {
+        double maxRange = 0;
+        for (LivingUnit enemy : enemies) {
+            if(enemy instanceof Building) {
+                Building building = (Building) enemy;
+                if(building.getType() == BuildingType.FACTION_BASE) {
+                    maxRange = Math.max(maxRange, game.getFactionBaseAttackRange());
+                } else {
+                    maxRange = Math.max(maxRange, game.getGuardianTowerAttackRange());
+                }
+            } else if(enemy instanceof Wizard) {
+                maxRange = Math.max(maxRange, game.getWizardCastRange());
+            } else if(enemy instanceof Minion) {
+                Minion minion = (Minion) enemy;
+                if(minion.getType() == MinionType.ORC_WOODCUTTER) {
+                    maxRange = Math.max(maxRange, game.getOrcWoodcutterAttackRange());
+                } else {
+                    maxRange = Math.max(maxRange, game.getFetishBlowdartAttackRange());
+                }
+            } else {
+                System.err.println("Unknown enemy type: " + enemy.getClass());
+            }
+        }
+        return maxRange;
+    }
+
+    /**
+     * negative value
+     */
+    private double getTimeForRetreat(double enemyAttackRange, double distanceToMe, int ticksInReserve) {
+        double distanceToSave = enemyAttackRange - distanceToMe + getBackwardSpeed()*ticksInReserve;
+        if(distanceToSave < 0) {
+            return 0;
+        }
         return (distanceToSave / getBackwardSpeed());
     }
 
     private List<LivingUnit> getNearDangerousEnemies() {
         Zone myZone = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber());
-        List<LivingUnit> enemies = zoneStatistics.get(myZone).getEnemies();
+        List<LivingUnit> enemies = strategy.getZoneStatistics().get(myZone).getEnemies();
         if (validZone(strategy.getCurrentZoneNumber() + 1)) {
             Zone nextZone = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber() + 1);
-            enemies.addAll(zoneStatistics.get(nextZone).getEnemies());
+            enemies.addAll(strategy.getZoneStatistics().get(nextZone).getEnemies());
         }
+        enemies.sort(new NearestToSelfComparator(self));
         return enemies;
     }
 
     private List<LivingUnit> getNearHelpfulAllies() {
         Zone selfZone = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber());
-        List<LivingUnit> allies = zoneStatistics.get(selfZone).getAllies();
+        List<LivingUnit> allies = strategy.getZoneStatistics().get(selfZone).getAllies();
         if (validZone(strategy.getCurrentZoneNumber() + 1)) {
             Zone nextZone = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber() + 1);
-            allies.addAll(zoneStatistics.get(nextZone).getAllies());
+            allies.addAll(strategy.getZoneStatistics().get(nextZone).getAllies());
         }
         return allies;
     }
 
     protected boolean safe() {
         Zone myZone = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber());
-        return zoneStatistics.get(myZone).getEnemies().size() == 0;
+        return strategy.getZoneStatistics().get(myZone).getEnemies().size() == 0;
     }
 
     protected boolean nextSafe() {
         if (validZone(strategy.getCurrentZoneNumber() + 1)) {
             Zone myZone = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber() + 1);
-            Map<Zone, ZoneStatistic> zoneStatistic = strategy.getStatisticCollector().collectZoneStatistic();
+            Map<Zone, ZoneStatistic> zoneStatistic = strategy.getZoneStatistics();
             return zoneStatistic.get(myZone).getEnemies().size() == 0;
         } else {
             return false;
@@ -237,7 +290,7 @@ public abstract class Behaviour {
     protected boolean safeByNumber(int num) {
         if (validZone(num)) {
             Zone myZone = strategy.getCapturedZones().get(num);
-            Map<Zone, ZoneStatistic> zoneStatistic = strategy.getStatisticCollector().collectZoneStatistic();
+            Map<Zone, ZoneStatistic> zoneStatistic = strategy.getZoneStatistics();
             return zoneStatistic.get(myZone).getEnemies().size() == 0;
         } else {
             return false;
@@ -311,7 +364,7 @@ public abstract class Behaviour {
                                 return;
                             }
                         }
-                        if(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()] == 0) {
+                        if (self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()] == 0) {
                             move.setAction(ActionType.MAGIC_MISSILE);
                             return;
                         } else {
@@ -432,13 +485,9 @@ public abstract class Behaviour {
     }
 
     protected Zone findNearSafeZone() {
-        List<Zone> capturedZones = strategy.getCapturedZones();
-        int currentZoneNumber = strategy.getCurrentZoneNumber();
-        if (currentZoneNumber > 0) {
-            return capturedZones.get(currentZoneNumber - 1);
-        } else {
-            return Zones.LAST_HOME;
-        }
+        return Zones.SAVE_ZONES.stream().filter(zone -> strategy.getZoneStatistics().get(zone).getEnemies().isEmpty())
+                .min((z1, z2) -> Double.compare(z1.getCentroid().getDistanceTo(self), z2.getCentroid().getDistanceTo(self)))
+                .orElse(Zones.LAST_HOME);
     }
 
     private double getBackwardSpeed() {
@@ -528,6 +577,33 @@ public abstract class Behaviour {
         points.remove(waypoints.size() - 1);
         points.add(newPoint);
         return points;
+    }
+
+    public List<Point2D> calculateWayPointsByGraph(Point2D target) {
+        Point2D selfPoint = strategy.getCurrentPosition();
+        Point2D nearToSelfGraphPoint = Points.CHECK_POINTS.get(0);
+        Point2D nearToTargetGraphPoint = Points.CHECK_POINTS.get(0);
+        for (Point2D checkPoint : Points.CHECK_POINTS) {
+            if (checkPoint.getDistanceTo(selfPoint) < nearToSelfGraphPoint.getDistanceTo(selfPoint)) {
+                nearToSelfGraphPoint = checkPoint;
+            }
+            if (checkPoint.getDistanceTo(target) < nearToTargetGraphPoint.getDistanceTo(target)) {
+                nearToTargetGraphPoint = checkPoint;
+            }
+        }
+        if (nearToSelfGraphPoint.getDistanceTo(nearToTargetGraphPoint) > POINT_RADIUS) {
+            GraphMapper graphMapper = strategy.getGraphMapper().copy();
+            GameMapGraph graph = strategy.getGraph().copy();
+            addEdgeBetweenAbsoluteAndGraphPoint(selfPoint, nearToSelfGraphPoint, graphMapper, graph);
+            addEdgeBetweenAbsoluteAndGraphPoint(target, nearToTargetGraphPoint, graphMapper, graph);
+            List<GameMapGraph.Node> bestWay = graph
+                    .findBestWayDijkstra(
+                            graphMapper.map(nearToSelfGraphPoint),
+                            graphMapper.map(nearToTargetGraphPoint));
+            return graphMapper.map(bestWay);
+        } else {
+            return new ArrayList<>(Collections.singletonList(target));
+        }
     }
 
 }

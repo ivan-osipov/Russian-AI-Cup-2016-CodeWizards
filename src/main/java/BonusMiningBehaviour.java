@@ -36,6 +36,7 @@ public class BonusMiningBehaviour extends Behaviour {
 
     @Override
     public void doIt() {
+        if (isDangerousAround()) return;
         currentBonusIteration = calculateCurrentBonusIteration();
         updateTimeOfOccurrence();
         if (Zones.HOME.contains(strategy.getCurrentPosition()) || Zones.atJungle(strategy.getCurrentPosition())) {//если умер или застрял
@@ -47,7 +48,6 @@ public class BonusMiningBehaviour extends Behaviour {
             System.out.println("Bonus mining is declined");
             strategy.setWizardState(WizardState.WALKING);
         }
-        zoneStatistics = strategy.getStatisticCollector().collectZoneStatistic();
         perform();
     }
 
@@ -98,7 +98,7 @@ public class BonusMiningBehaviour extends Behaviour {
                         }
                     } else if (upperBonusIsAvailable) {
                         double owningCoef = estimateUnits(Zones.CENTER);
-                        if (zoneStatistics.get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 2) {
+                        if (strategy.getZoneStatistics().get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 2) {
                             System.out.println("Center is clear");
                             bonusIteration.setState(BonusMiningState.FIND_SECOND);
                         } else {
@@ -120,7 +120,7 @@ public class BonusMiningBehaviour extends Behaviour {
                         }
                     } else if (lowerBonusIsAvailable) {
                         double owningCoef = estimateUnits(Zones.CENTER);
-                        if (zoneStatistics.get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 2) {
+                        if (strategy.getZoneStatistics().get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 2) {
                             System.out.println("Go to next bonus");
                             bonusIteration.setState(BonusMiningState.FIND_SECOND);
                         } else {
@@ -136,7 +136,7 @@ public class BonusMiningBehaviour extends Behaviour {
                 break;
             case INTERRUPTED:
                 double owningCoef = estimateUnits(Zones.CENTER);
-                if (zoneStatistics.get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 2) {
+                if (strategy.getZoneStatistics().get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 2) {
                     System.out.println("Stop interrupting");
                     bonusIteration.setState(BonusMiningState.FIND_SECOND);
                 } else {
@@ -174,7 +174,7 @@ public class BonusMiningBehaviour extends Behaviour {
                     Point2D myPos = strategy.getCurrentPosition();
                     if (firstBonusZone.contains(myPos)) {
                         owningCoef = estimateUnits(Zones.CENTER);
-                        if (zoneStatistics.get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 1.5) {
+                        if (strategy.getZoneStatistics().get(Zones.CENTER).getEnemies().size() == 0 || owningCoef > 1.5) {
                             goTo(nextBonus);
                         } else {
 //                            bonusIteration.setState(BonusMiningState.INTERRUPTED);
@@ -195,7 +195,7 @@ public class BonusMiningBehaviour extends Behaviour {
     }
 
     private double estimateUnits(Zone zone) {
-        ZoneStatistic zoneStatistic = zoneStatistics.get(zone);
+        ZoneStatistic zoneStatistic = strategy.getZoneStatistics().get(zone);
         LivingUnitsObjective objective = new LivingUnitsObjective();
         return objective.estimate(zoneStatistic.getAllies()) / objective.estimate(zoneStatistic.getEnemies());
     }

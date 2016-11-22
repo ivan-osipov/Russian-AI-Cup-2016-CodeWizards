@@ -70,6 +70,8 @@ public class Zones {
 
     public static final List<Zone> ALL_STATIC_COMMON = Arrays.asList(TOP_ARENA_PLACE, BOTTOM_ARENA_PLACE, TOP_MIDDLE_TRANSITION, MIDDLE_BOTTOM_TRANSITION, CENTER);
 
+    public static final List<Zone> SAVE_ZONES;
+
     public static final List<Zone> ALL_STATIC;
 
     public static final Zone[] ALL_STATIC_ARRAY;
@@ -80,6 +82,10 @@ public class Zones {
         ALL_STATIC.addAll(ALL_STATIC_ENEMY);
         ALL_STATIC.addAll(ALL_STATIC_COMMON);
         ALL_STATIC_ARRAY = Zones.ALL_STATIC.toArray(new Zone[Zones.ALL_STATIC.size()]);
+
+        SAVE_ZONES = new ArrayList<>();
+        SAVE_ZONES.addAll(ALL_STATIC_ALLIDE);
+        SAVE_ZONES.addAll(ALL_STATIC_COMMON);
     }
 
 

@@ -1,6 +1,8 @@
 import model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class PushingBehaviour extends Behaviour {
@@ -87,35 +89,13 @@ public class PushingBehaviour extends Behaviour {
 
     private List<LivingUnit> getSortedByWeakFactorNearstEnemies() {
         List<LivingUnit> targets = new ArrayList<>();
-        List<Building> buildings = Arrays.asList(world.getBuildings());
-        targets.addAll(buildings);
-        Map<LivingUnit, Integer> weights = new HashMap<>();
-        for (Building building : buildings) {
-            weights.put(building, 1);
-        }
-        List<Wizard> wizards = Arrays.asList(world.getWizards());
-        targets.addAll(wizards);
-        for (Wizard wizard : wizards) {
-            weights.put(wizard, 2);
-        }
-        List<Minion> minions = Arrays.asList(world.getMinions());
-        targets.addAll(minions);
-        for (Minion minion : minions) {
-            weights.put(minion, 3);
-        }
-        return targets.stream().filter(target -> {
-            return target.getFaction() != Faction.NEUTRAL && target.getFaction() != self.getFaction() && self.getDistanceTo(target) <= self.getCastRange();
-        }).sorted((target1, target2) -> {
-            int weightsCompare = Integer.compare(weights.get(target1), weights.get(target2));
-            if (weightsCompare == 0) {
-                int lifeCompare = Integer.compare(target1.getLife(), target2.getLife());
-                if (lifeCompare == 0) {
-                    return Double.compare(self.getDistanceTo(target1), self.getDistanceTo(target2));
-                }
-                return lifeCompare;
-            }
-            return weightsCompare;
-        }).collect(Collectors.toList());
+        targets.addAll(Arrays.asList(world.getBuildings()));
+        targets.addAll(Arrays.asList(world.getWizards()));
+        targets.addAll(Arrays.asList(world.getMinions()));
+        return targets.stream()
+                .filter(new TargetEnemyFilter(self))
+                .sorted(new TargetComparator(self))
+                .collect(Collectors.toList());
     }
 
 }

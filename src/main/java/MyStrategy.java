@@ -15,6 +15,7 @@ public final class MyStrategy implements Strategy {
     private World world;
     private Game game;
     private Move move;
+    private Map<Zone, ZoneStatistic> zoneStatistics;
 
     private WizardState wizardState;
     private Point2D startPoint;
@@ -57,6 +58,7 @@ public final class MyStrategy implements Strategy {
 
 
     private void initializeStrategy() {
+        long time = System.currentTimeMillis();
         if (wizardState == null) {
             VISUALIZER = new DebugVisualizer();
 
@@ -83,14 +85,16 @@ public final class MyStrategy implements Strategy {
             behaviours.put(WizardState.PUSHING, new PushingBehaviour(self, world, game, move, this));
             behaviours.put(WizardState.BONUS_MINING, new BonusMiningBehaviour(self, world, game, move, this));
         }
+        statisticCollector = new StatisticCollector(self, world);
         behaviours.values().forEach(b -> b.update(self, world, move));
+        zoneStatistics = statisticCollector.collectZoneStatistic();
 //        updateBonusStatus();
         currentPosition = new Point2D(self.getX(), self.getY());
 
-        statisticCollector = new StatisticCollector(self, world);
         updateCurrentZoneNumber();
         updateBattleZoneNumber();
         drawStatistic(statisticCollector.collectZoneStatistic());
+        System.out.println("Time for tick" + (System.currentTimeMillis() - time));
     }
 
 //    private void updateBonusStatus() {
@@ -102,6 +106,10 @@ public final class MyStrategy implements Strategy {
 //            bonusRespTimes.remove(0);
 //        }
 //    }
+
+    public Map<Zone, ZoneStatistic> getZoneStatistics() {
+        return zoneStatistics;
+    }
 
     private void updateCurrentZoneNumber() {
         for (int i = 0; i < capturedZones.size(); i++) {

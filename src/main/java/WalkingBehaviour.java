@@ -26,7 +26,7 @@ public class WalkingBehaviour extends Behaviour {
                 return;
             }
             targetPoint = strategy.getCapturedZones().get(strategy.getCurrentZoneNumber() + 1).getCentroid();
-            Point2D selfPoint = new Point2D(self.getX(), self.getY());
+            Point2D selfPoint = strategy.getCurrentPosition();
             Point2D nearToSelfGraphPoint = Points.CHECK_POINTS.get(0);
             Point2D nearToTargetGraphPoint = Points.CHECK_POINTS.get(0);
             for (Point2D checkPoint : Points.CHECK_POINTS) {
