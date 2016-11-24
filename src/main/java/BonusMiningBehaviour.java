@@ -62,21 +62,11 @@ public class BonusMiningBehaviour extends Behaviour {
         switch (bonusIteration.getState()) {
             case HOPE_OF_TAKE:
                 if (Points.LOWER_BONUS_POINT.equals(bonusPoint)) {
-                    wayToBonus = getReplaceLastPoint(wayToBonus, lowerWaitingPoint);
-                    Point2D lastPoint = wayToBonus.get(wayToBonus.size() - 1);
-                    if (lastPoint.getDistanceTo(self) < POINT_RADIUS) {
-                        move.setTurn(self.getAngleTo(lastPoint.getX(), lastPoint.getY()));
-                    } else {
-                        goTo(getNextWaypoint(wayToBonus));
-                    }
+                    Point2D waitingPoint = lowerWaitingPoint;
+                    goToBonus(wayToBonus, waitingPoint);
                 } else {
-                    Point2D lastPoint = wayToBonus.get(wayToBonus.size() - 1);
-                    wayToBonus = getReplaceLastPoint(wayToBonus, upperWaitingPoint);
-                    if (lastPoint.getDistanceTo(self) < POINT_RADIUS) {
-                        move.setTurn(self.getAngleTo(lastPoint.getX(), lastPoint.getY()));
-                    } else {
-                        goTo(getNextWaypoint(wayToBonus));
-                    }
+                    Point2D waitingPoint = upperWaitingPoint;
+                    goToBonus(wayToBonus, waitingPoint);
                 }
                 break;
             case FIND_FIRST:
@@ -187,6 +177,19 @@ public class BonusMiningBehaviour extends Behaviour {
                     }
                 }
                 break;
+        }
+    }
+
+    private void goToBonus(List<Point2D> wayToBonus, Point2D waitingPoint) {
+        Point2D lastPoint = wayToBonus.get(wayToBonus.size() - 1);
+        wayToBonus = getReplaceLastPoint(wayToBonus, waitingPoint);
+        if (lastPoint.getDistanceTo(self) <= POINT_RADIUS) {
+            double angleToBonus = self.getAngleTo(lastPoint.getX(), lastPoint.getY());
+            if(Math.abs(angleToBonus) > game.getStaffSector() / 4) {
+                move.setTurn(angleToBonus);
+            }
+        } else {
+            goTo(getNextWaypoint(wayToBonus));
         }
     }
 

@@ -48,7 +48,7 @@ public abstract class Behaviour {
         double wayTimeToBonus = calculateTimeForWayToBonus();
         int remainedTimeToBonusAppearance = game.getBonusAppearanceIntervalTicks() -
                 (world.getTickIndex() % game.getBonusAppearanceIntervalTicks());
-        if (remainedTimeToBonusAppearance <= wayTimeToBonus) {
+        if (remainedTimeToBonusAppearance <= wayTimeToBonus + 100) {
             BonusMiningBehaviour behaviour = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
             behaviour.setPreIterationState(true);
             strategy.setWizardState(WizardState.BONUS_MINING);
@@ -80,7 +80,7 @@ public abstract class Behaviour {
                     return true;
                 }
             }
-            if (!safe() && !nextSafe()) {
+            if ((this instanceof PushingBehaviour || this instanceof WalkingBehaviour) && !safe() && !nextSafe()) {
                 Zone nearSafeZone = findNearSafeZone();
                 goBack(nearSafeZone.getCentroid());
                 return true;
@@ -165,19 +165,19 @@ public abstract class Behaviour {
             return false;
         }
         List<LivingUnit> enemies = getNearDangerousEnemies();
-        int ticksInReserve = 5;
+        int ticksInReserve = 10;
         double potentialDamage = 0;
         for (LivingUnit enemy : enemies) {
             if (enemy instanceof Building) {
                 Building building = (Building) enemy;
                 if (building.getType() == BuildingType.GUARDIAN_TOWER) {
                     double enemyAttackRange = game.getGuardianTowerAttackRange();
-                    double distanceToMe = building.getDistanceTo(self);
+                    double distanceToMe = building.getDistanceTo(self) + self.getRadius()*2;
                     double timeForRetreat = getTimeForRetreat(enemyAttackRange, distanceToMe, ticksInReserve);
                     if(timeForRetreat == 0) {
                         continue;
                     }
-                    if (timeForRetreat < building.getRemainingActionCooldownTicks()) {
+                    if (timeForRetreat >= building.getRemainingActionCooldownTicks()) {
                         potentialDamage += game.getGuardianTowerDamage();
                     }
                 }
@@ -185,12 +185,12 @@ public abstract class Behaviour {
                 Wizard wizard = (Wizard) enemy;
                 List<SkillType> skillTypes = Arrays.asList(wizard.getSkills());
                 double wizardDamage = 0;
-                double distanceToMe = wizard.getDistanceTo(self);
+                double distanceToMe = wizard.getDistanceTo(self) + self.getRadius();
                 double timeForRetreat = getTimeForRetreat(game.getWizardCastRange(), distanceToMe, ticksInReserve);
                 if(timeForRetreat == 0) {
                     continue;
                 }
-                if (timeForRetreat < wizard.getRemainingActionCooldownTicks()) {
+                if (timeForRetreat >= wizard.getRemainingActionCooldownTicks()) {
                     double manaAdd = calculateManaAddAfterTicks(ticksInReserve, wizard.getLevel());
                     if (skillTypes.contains(SkillType.FROST_BOLT)
                             && wizard.getMana() + manaAdd >= game.getFrostBoltManacost()
@@ -212,12 +212,12 @@ public abstract class Behaviour {
                 double distanceToMe = minion.getDistanceTo(self);
                 if(minion.getType() == MinionType.ORC_WOODCUTTER) {
                     double timeForRetreat = getTimeForRetreat(game.getOrcWoodcutterAttackRange(), distanceToMe, ticksInReserve);
-                    if (timeForRetreat < minion.getRemainingActionCooldownTicks()) {
+                    if (timeForRetreat >= minion.getRemainingActionCooldownTicks()) {
                         potentialDamage += game.getOrcWoodcutterDamage();
                     }
                 } else {
                     double timeForRetreat = getTimeForRetreat(game.getFetishBlowdartAttackRange(), distanceToMe, ticksInReserve);
-                    if (timeForRetreat < minion.getRemainingActionCooldownTicks()) {
+                    if (timeForRetreat >= minion.getRemainingActionCooldownTicks()) {
                         potentialDamage += (game.getOrcWoodcutterAttackRange() / 2);
                     }
                 }
