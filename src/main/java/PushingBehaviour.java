@@ -13,12 +13,6 @@ public class PushingBehaviour extends Behaviour {
 
     @Override
     public void perform() {
-//        if(safe()) {
-//            BonusMiningBehaviour bonusMining = (BonusMiningBehaviour) strategy.getBehaviours().get(WizardState.BONUS_MINING);
-//            if(bonusMining.isInterrupted()) { //todo возврат к бонусам
-//                strategy.setWizardState(WizardState.BONUS_MINING);
-//            }
-//        }
         if(world.getTickIndex() % 3 == 0) {
             System.out.println("Pushing");
         }

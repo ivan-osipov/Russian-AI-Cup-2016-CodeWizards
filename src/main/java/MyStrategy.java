@@ -88,7 +88,6 @@ public final class MyStrategy implements Strategy {
         statisticCollector = new StatisticCollector(self, world);
         behaviours.values().forEach(b -> b.update(self, world, move));
         zoneStatistics = statisticCollector.collectZoneStatistic();
-//        updateBonusStatus();
         currentPosition = new Point2D(self.getX(), self.getY());
 
         updateCurrentZoneNumber();
@@ -96,16 +95,6 @@ public final class MyStrategy implements Strategy {
         drawStatistic(statisticCollector.collectZoneStatistic());
         System.out.println("Time for tick" + (System.currentTimeMillis() - time));
     }
-
-//    private void updateBonusStatus() {
-//        BonusMiningBehaviour bonusMiningBehaviour = (BonusMiningBehaviour) behaviours.get(WizardState.BONUS_MINING);
-//        List<Integer> bonusRespTimes = bonusMiningBehaviour.getBonusIterations();
-//        System.out.println("Next bonus time " + bonusRespTimes.get(0));
-//        if(!bonusRespTimes.isEmpty() && bonusRespTimes.get(0).equals(world.getTickIndex())) {
-//            bonusMiningBehaviour.updateTimeOfOccurrence();
-//            bonusRespTimes.remove(0);
-//        }
-//    }
 
     public Map<Zone, ZoneStatistic> getZoneStatistics() {
         return zoneStatistics;
@@ -249,106 +238,6 @@ public final class MyStrategy implements Strategy {
                     Color.BLACK);
         }
     }
-
-//    private void processMessages() {
-//        if (self.isMaster()) {
-//            List<LaneType> laneTypes = new ArrayList<>(Arrays.asList(LaneType.TOP, LaneType.MIDDLE, LaneType.BOTTOM));
-//            laneTypes.remove(myLane);
-//            for (int i = 0; i < 4; i++) {
-//                laneTypes.addAll(Arrays.asList(LaneType.TOP, LaneType.MIDDLE, LaneType.BOTTOM));
-//            }
-//            Map<LaneType, List<Integer>> skillTypesByLanes = createSkillTypesByLane();
-//
-//            skillTypesByLanes.get(myLane).add(mySkillBranch);
-//
-//            Message[] messages = Arrays.stream(world.getPlayers())
-//                    .filter(p -> !p.isMe())
-//                    .map(p -> {
-//                        LaneType currentLaneType;
-//                        if (laneTypes.size() > 0) {
-//                            currentLaneType = laneTypes.get(0);
-//                            laneTypes.remove(0);
-//                        } else {
-//                            currentLaneType = LaneType.values()[random.nextInt(3)];
-//                        }
-//                        List<Integer> skillTypesOnCurrentLane = skillTypesByLanes.get(myLane);
-//                        Integer notUsedSkillType = null;
-//                        for (int i = 0; i < 5; i++) {
-//                            if (!skillTypesOnCurrentLane.contains(i)) {
-//                                notUsedSkillType = i;
-//                                break;
-//                            }
-//                        }
-//                        if (notUsedSkillType == null) {
-//                            notUsedSkillType = random.nextInt(5);
-//                        }
-//
-//                        return new Message(currentLaneType, skillBranches[notUsedSkillType][4], new byte[0]);
-//                    }).toArray(Message[]::new);
-//            move.setMessages(messages);
-//
-//
-//        } else {
-//            myLane = LaneType.TOP;
-//            mySkillBranch = FROST_BOLT_BRANCH;
-//            favoriteActionType = ActionType.FROST_BOLT;
-//            damager = true;
-//            Message[] messages = self.getMessages();
-//            int myMessageIndex = ((Long) self.getId()).intValue();
-//            if(myMessageIndex >= messages.length) {
-//                System.err.println("Incorrect message index");
-//                return;
-//            }
-//            Message messageForMe = messages[myMessageIndex];
-//            if(messageForMe.getLane() != null) {
-//                myLane = messageForMe.getLane();
-//                System.out.println("Accepted lane from message");
-//            }
-//            switch (messageForMe.getSkillToLearn()) {
-//                case ADVANCED_MAGIC_MISSILE:
-//                    mySkillBranch = MISSILE_BRANCH;
-//                    favoriteActionType = ActionType.MAGIC_MISSILE;
-//                    damager = true;
-//                    break;
-//                case FROST_BOLT:
-//                    mySkillBranch = FROST_BOLT_BRANCH;
-//                    favoriteActionType = ActionType.FROST_BOLT;
-//                    damager = true;
-//                    break;
-//                case FIREBALL:
-//                    mySkillBranch = STAFF_AND_FIREBALL_BRANCH;
-//                    favoriteActionType = ActionType.FIREBALL;
-//                    damager = true;
-//                    break;
-//                case HASTE:
-//                    mySkillBranch = HASTE_BRANCH;
-//                    favoriteActionType = ActionType.HASTE;
-//                    damager = false;
-//                    break;
-//                case SHIELD:
-//                    mySkillBranch = SHIELD_BRANCH;
-//                    favoriteActionType = ActionType.SHIELD;
-//                    damager = false;
-//                    break;
-//                default:
-//                    mySkillBranch = FROST_BOLT_BRANCH;
-//                    favoriteActionType = ActionType.FROST_BOLT;
-//                    damager = true;
-//                    break;
-//            }
-//        }
-//    }
-// важность бонуса защиты при малом количестве здоровья - больше
-//todo если couldown 0 и мана есть и расстояние между двумя соперниками 80% от радиуса фаербола, обязательно один волшебник
-//    public void fireballShot() {
-//        move.setMaxCastDistance(0);//todo расстояние до центра между группой противников
-//        move.setMinCastDistance(move.getMaxCastDistance() * 0.8);
-//        move.setAction(ActionType.FIREBALL);
-//    }
-// todo ускорить союзника, если маны останется на 100% (ледяной болт) - скорость регенерации*общий кулдаун для ледяного болта, если его здоровье 15% и он среди 5 ближайших союзников к ближайшему противнику, если у самого более 80% здоровья
-//todo если ускоренный союзник с учетом скорости и времени до конца регенерации маны успевает покинуть поле боя, то брать 100% для огненного болта, если ближайшее время его запуска не превышает время на покидание зоны бд союзника
-//
-//todo EMPOWER усиление атаки, если количество союзников более 150% противников, то нужно
 
     private void drawStatistic(Map<Zone, ZoneStatistic> statisticsByZones) {
         if (VISUALIZER == null || !VISUALIZER.isInitialized()) return;

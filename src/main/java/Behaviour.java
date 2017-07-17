@@ -39,11 +39,6 @@ public abstract class Behaviour {
     abstract void perform();
 
     public void doIt() {
-//        System.out.println(self.getX() + "   " + self.getY());
-//        if (!(this instanceof WalkingBehaviour) && strategy.getStartPoint().equals(currentPosition)) {
-//            strategy.setWizardState(WizardState.WALKING);
-//            return;
-//        }
         if (isDangerousAround()) return;
         double wayTimeToBonus = calculateTimeForWayToBonus();
         int remainedTimeToBonusAppearance = game.getBonusAppearanceIntervalTicks() -
